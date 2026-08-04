@@ -59,11 +59,61 @@
     - NIST800-53R5_AU-3
     - NIST800-53R5_AU-12
     - sudo
-  ansible.builtin.lineinfile:
-    path: /etc/sudoers
-    regexp: '^Defaults\s+logfile'
-    line: 'Defaults        logfile="{{ ubtu26cis_sudo_logfile }}"'
-    insertafter: '^\s*Defaults'
+  # Ubuntu 26.04 ships sudo-rs, which does not support the logfile= Defaults
+  # setting (visudo rejects it). The benchmark allows two methods:
+  #   Method A (sudo-rs): capture authpriv.* via rsyslog/journald
+  #   Method B (classic sudo): Defaults logfile=
+  block:
+    - name: "5.2.3 | AUDIT | Ensure sudo log file exists | Detect sudo implementation"
+      ansible.builtin.command: sudo --version
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_sudo_version
+
+    - name: "5.2.3 | PATCH | Ensure sudo log file exists | Method B - classic sudo logfile"
+      when: "'sudo-rs' not in (discovered_sudo_version.stdout | default(''))"
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: '^Defaults\s+logfile'
+        line: 'Defaults        logfile="{{ ubtu26cis_sudo_logfile }}"'
+        insertafter: '^\s*Defaults'
+        validate: 'visudo -cf %s'
+
+    - name: "5.2.3 | PATCH | Ensure sudo log file exists | Method A - route authpriv to sudo log via rsyslog"
+      when:
+        - "'sudo-rs' in (discovered_sudo_version.stdout | default(''))"
+        - ubtu26cis_syslog_service == 'rsyslog'
+      ansible.builtin.copy:
+        dest: /etc/rsyslog.d/30-sudo.conf
+        content: |
+          # CIS 5.2.3 - durable sudo event capture
+          authpriv.* {{ ubtu26cis_sudo_logfile }}
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      notify: Restart syslog service
+
+    - name: "5.2.3 | PATCH | Ensure sudo log file exists | Method A - sudo log file permissions"
+      when: "'sudo-rs' in (discovered_sudo_version.stdout | default(''))"
+      ansible.builtin.file:
+        path: "{{ ubtu26cis_sudo_logfile }}"
+        state: touch
+        owner: root
+        group: adm
+        mode: 'u-x,g-wx,o-rwx'
+      changed_when: false
+
+    - name: "5.2.3 | AUDIT | Ensure sudo log file exists | Warn when journald is the syslog service"
+      when:
+        - "'sudo-rs' in (discovered_sudo_version.stdout | default(''))"
+        - ubtu26cis_syslog_service != 'rsyslog'
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! sudo-rs is in use and the syslog service is not rsyslog."
+          - "journald captures authpriv events, satisfying the benchmark, but no"
+          - "dedicated {{ ubtu26cis_sudo_logfile }} is populated. Set"
+          - "ubtu26cis_syslog_service to rsyslog if a dedicated sudo log is required."
 
 - name: "5.2.4 | PATCH | Ensure users must provide password for escalation"
   when: ubtu26cis_rule_5_2_4
