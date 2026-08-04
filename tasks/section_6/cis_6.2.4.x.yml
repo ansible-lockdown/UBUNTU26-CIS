@@ -160,11 +160,8 @@
   loop_control:
     label: "{{ item.path }}"
 
-# audit_bins is the canonical list of audit tools, but not every distribution
-# ships all of them - Ubuntu 26.04 has no autrace. Filter to the tools actually
-# present so the permission tasks do not fail on an absent binary.
 - name: "6.2.4.8/9/10 | AUDIT | Discover which audit tools are present"
-  when: >
+  when:
     ubtu26cis_rule_6_2_4_8 or
     ubtu26cis_rule_6_2_4_9 or
     ubtu26cis_rule_6_2_4_10
