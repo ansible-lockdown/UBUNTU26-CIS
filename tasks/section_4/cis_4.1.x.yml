@@ -59,6 +59,44 @@
     direction: incoming
   notify: Reload ufw
 
+# Applied before 4.1.4 sets the outgoing default to deny. Without these rules a
+# hardened host has no DNS, no package updates and no route to a remote log host,
+# and any later task that installs a package fails. v1.0.0 has no control for
+# outbound allowances - the benchmark only requires the default to be deny, which
+# 4.1.4 still enforces - so this is an OPTIONAL supporting task.
+- name: "OPTIONAL | PATCH | UFW allow required outbound connections"
+  when:
+    - ubtu26cis_rule_4_1_4
+    - ubtu26cis_ufw_allow_out_ports != "all"
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - ufw
+  community.general.ufw:
+    rule: allow
+    direction: out
+    proto: "{{ item.proto }}"
+    to_port: '{{ item.port }}'
+  loop: "{{ ubtu26cis_ufw_allow_out_ports }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto }}"
+  notify: Reload ufw
+
+- name: "OPTIONAL | PATCH | UFW allow all outbound connections"
+  when:
+    - ubtu26cis_rule_4_1_4
+    - ubtu26cis_ufw_allow_out_ports == "all"
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - ufw
+  community.general.ufw:
+    rule: allow
+    direction: out
+  notify: Reload ufw
+
 - name: "4.1.4 | PATCH | Ensure ufw outgoing default is configured"
   when: ubtu26cis_rule_4_1_4
   tags:
@@ -88,7 +126,9 @@
   notify: Reload ufw
 
 - name: "OPTIONAL | PATCH | UFW firewall force to use /etc/sysctl.conf settings"
-  when: ubtu26cis_ufw_use_sysctl
+  when:
+    - ubtu26cis_ufw_use_sysctl
+    - "'ufw' in ansible_facts['packages']"
   tags: always
   ansible.builtin.lineinfile:
     path: /etc/default/ufw
