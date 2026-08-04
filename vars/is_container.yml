@@ -1,0 +1,277 @@
+---
+
+# File to skip controls if container
+# Based on standard image no changes
+# it expected all pkgs required for the container are already installed
+
+## controls
+
+# Firewall
+ubtu26cis_rule_4_1_1: false
+ubtu26cis_rule_4_1_2: false
+ubtu26cis_rule_4_1_3: false
+ubtu26cis_rule_4_1_4: false
+ubtu26cis_rule_4_1_5: false
+
+# Filesystems
+
+## Related individual rules
+# Aide
+ubtu26cis_rule_6_3_1: false
+ubtu26cis_rule_6_3_2: false
+
+# AppArmor
+ubtu26cis_rule_1_3_1_1: false
+ubtu26cis_rule_1_3_1_2: false
+ubtu26cis_rule_1_3_1_3: false
+ubtu26cis_rule_1_3_1_4: false
+
+# time sync
+ubtu26cis_rule_2_3_2_1: false
+ubtu26cis_rule_2_3_2_2: false
+
+# Auditd
+ubtu26cis_rule_6_2_1_1: false
+ubtu26cis_rule_6_2_1_2: false
+ubtu26cis_rule_6_2_1_3: false
+ubtu26cis_rule_6_2_1_4: false
+ubtu26cis_rule_6_2_2_1: false
+ubtu26cis_rule_6_2_2_2: false
+ubtu26cis_rule_6_2_2_3: false
+ubtu26cis_rule_6_2_2_4: false
+# Auditd rules
+ubtu26cis_rule_6_2_3_1: false
+ubtu26cis_rule_6_2_3_2: false
+ubtu26cis_rule_6_2_3_3: false
+ubtu26cis_rule_6_2_3_4: false
+ubtu26cis_rule_6_2_3_5: false
+ubtu26cis_rule_6_2_3_6: false
+ubtu26cis_rule_6_2_3_7: false
+ubtu26cis_rule_6_2_3_8: false
+ubtu26cis_rule_6_2_3_9: false
+ubtu26cis_rule_6_2_3_10: false
+ubtu26cis_rule_6_2_3_11: false
+ubtu26cis_rule_6_2_3_12: false
+ubtu26cis_rule_6_2_3_13: false
+ubtu26cis_rule_6_2_3_14: false
+ubtu26cis_rule_6_2_3_15: false
+ubtu26cis_rule_6_2_3_16: false
+ubtu26cis_rule_6_2_3_17: false
+ubtu26cis_rule_6_2_3_18: false
+ubtu26cis_rule_6_2_3_19: false
+ubtu26cis_rule_6_2_3_20: false
+ubtu26cis_rule_6_2_3_21: false
+ubtu26cis_rule_6_2_3_22: false
+ubtu26cis_rule_6_2_3_23: false
+ubtu26cis_rule_6_2_3_24: false
+ubtu26cis_rule_6_2_3_25: false
+ubtu26cis_rule_6_2_3_26: false
+ubtu26cis_rule_6_2_3_27: false
+ubtu26cis_rule_6_2_3_28: false
+ubtu26cis_rule_6_2_3_29: false
+ubtu26cis_rule_6_2_3_30: false
+ubtu26cis_rule_6_2_3_31: false
+ubtu26cis_rule_6_2_3_32: false
+ubtu26cis_rule_6_2_3_33: false
+ubtu26cis_rule_6_2_3_34: false
+ubtu26cis_rule_6_2_3_35: false
+ubtu26cis_rule_6_2_3_36: false
+# Auditd file access
+ubtu26cis_rule_6_2_4_1: false
+ubtu26cis_rule_6_2_4_2: false
+ubtu26cis_rule_6_2_4_3: false
+ubtu26cis_rule_6_2_4_4: false
+ubtu26cis_rule_6_2_4_5: false
+ubtu26cis_rule_6_2_4_6: false
+ubtu26cis_rule_6_2_4_7: false
+ubtu26cis_rule_6_2_4_8: false
+ubtu26cis_rule_6_2_4_9: false
+ubtu26cis_rule_6_2_4_10: false
+
+# cron
+ubtu26cis_rule_2_4_1_1: false
+ubtu26cis_rule_2_4_1_2: false
+ubtu26cis_rule_2_4_1_3: false
+ubtu26cis_rule_2_4_1_4: false
+ubtu26cis_rule_2_4_1_5: false
+ubtu26cis_rule_2_4_1_6: false
+ubtu26cis_rule_2_4_1_7: false
+ubtu26cis_rule_2_4_1_8: false
+ubtu26cis_rule_2_4_1_9: false
+ubtu26cis_rule_2_4_2_1: false
+
+# ssh
+ubtu26cis_rule_5_1_1: false
+ubtu26cis_rule_5_1_2: false
+ubtu26cis_rule_5_1_3: false
+ubtu26cis_rule_5_1_4: false
+ubtu26cis_rule_5_1_5: false
+ubtu26cis_rule_5_1_6: false
+ubtu26cis_rule_5_1_7: false
+ubtu26cis_rule_5_1_8: false
+ubtu26cis_rule_5_1_9: false
+ubtu26cis_rule_5_1_10: false
+ubtu26cis_rule_5_1_11: false
+ubtu26cis_rule_5_1_12: false
+ubtu26cis_rule_5_1_13: false
+ubtu26cis_rule_5_1_14: false
+ubtu26cis_rule_5_1_15: false
+ubtu26cis_rule_5_1_16: false
+ubtu26cis_rule_5_1_17: false
+ubtu26cis_rule_5_1_18: false
+ubtu26cis_rule_5_1_19: false
+ubtu26cis_rule_5_1_20: false
+ubtu26cis_rule_5_1_21: false
+ubtu26cis_rule_5_1_22: false
+ubtu26cis_rule_5_1_23: false
+ubtu26cis_rule_5_1_24: false
+
+# ---------------------------------------------------------------------------
+# Controls whose task import in section_N/main.yml is gated on
+# 'not system_is_container'. They are listed here as well so the generated
+# goss vars file disables them too - otherwise the audit reports failures for
+# controls the role deliberately never remediates on a container.
+# ---------------------------------------------------------------------------
+
+# Filesystem kernel modules (1.1.1.x)
+ubtu26cis_rule_1_1_1_1: false
+ubtu26cis_rule_1_1_1_2: false
+ubtu26cis_rule_1_1_1_3: false
+ubtu26cis_rule_1_1_1_4: false
+ubtu26cis_rule_1_1_1_5: false
+ubtu26cis_rule_1_1_1_6: false
+ubtu26cis_rule_1_1_1_7: false
+ubtu26cis_rule_1_1_1_8: false
+ubtu26cis_rule_1_1_1_9: false
+ubtu26cis_rule_1_1_1_10: false
+ubtu26cis_rule_1_1_1_11: false
+
+# Filesystem partitions (1.1.2.x)
+ubtu26cis_rule_1_1_2_1_1: false
+ubtu26cis_rule_1_1_2_1_2: false
+ubtu26cis_rule_1_1_2_1_3: false
+ubtu26cis_rule_1_1_2_1_4: false
+ubtu26cis_rule_1_1_2_2_1: false
+ubtu26cis_rule_1_1_2_2_2: false
+ubtu26cis_rule_1_1_2_2_3: false
+ubtu26cis_rule_1_1_2_2_4: false
+ubtu26cis_rule_1_1_2_4_1: false
+ubtu26cis_rule_1_1_2_4_2: false
+ubtu26cis_rule_1_1_2_4_3: false
+ubtu26cis_rule_1_1_2_5_1: false
+ubtu26cis_rule_1_1_2_5_2: false
+ubtu26cis_rule_1_1_2_5_3: false
+ubtu26cis_rule_1_1_2_5_4: false
+ubtu26cis_rule_1_1_2_6_1: false
+ubtu26cis_rule_1_1_2_6_2: false
+ubtu26cis_rule_1_1_2_6_3: false
+ubtu26cis_rule_1_1_2_6_4: false
+ubtu26cis_rule_1_1_2_7_1: false
+ubtu26cis_rule_1_1_2_7_2: false
+ubtu26cis_rule_1_1_2_7_3: false
+ubtu26cis_rule_1_1_2_7_4: false
+
+# Package repositories and updates (1.2.x)
+ubtu26cis_rule_1_2_1_1: false
+ubtu26cis_rule_1_2_1_2: false
+ubtu26cis_rule_1_2_1_3: false
+ubtu26cis_rule_1_2_1_4: false
+ubtu26cis_rule_1_2_1_5: false
+ubtu26cis_rule_1_2_1_6: false
+ubtu26cis_rule_1_2_1_7: false
+ubtu26cis_rule_1_2_1_8: false
+ubtu26cis_rule_1_2_1_9: false
+ubtu26cis_rule_1_2_1_10: false
+ubtu26cis_rule_1_2_1_11: false
+ubtu26cis_rule_1_2_1_12: false
+ubtu26cis_rule_1_2_1_13: false
+ubtu26cis_rule_1_2_1_14: false
+ubtu26cis_rule_1_2_1_15: false
+ubtu26cis_rule_1_2_2_1: false
+
+# Process hardening / sysctl (1.5.x)
+ubtu26cis_rule_1_5_1: false
+ubtu26cis_rule_1_5_2: false
+ubtu26cis_rule_1_5_3: false
+ubtu26cis_rule_1_5_4: false
+ubtu26cis_rule_1_5_5: false
+ubtu26cis_rule_1_5_6: false
+ubtu26cis_rule_1_5_7: false
+ubtu26cis_rule_1_5_8: false
+ubtu26cis_rule_1_5_9: false
+ubtu26cis_rule_1_5_10: false
+ubtu26cis_rule_1_5_11: false
+ubtu26cis_rule_1_5_12: false
+
+# GNOME Display Manager (1.7.x)
+ubtu26cis_rule_1_7_1: false
+ubtu26cis_rule_1_7_2: false
+ubtu26cis_rule_1_7_3: false
+ubtu26cis_rule_1_7_4: false
+ubtu26cis_rule_1_7_5: false
+ubtu26cis_rule_1_7_6: false
+ubtu26cis_rule_1_7_7: false
+
+# sudo (5.2.x)
+ubtu26cis_rule_5_2_1: false
+ubtu26cis_rule_5_2_2: false
+ubtu26cis_rule_5_2_3: false
+ubtu26cis_rule_5_2_4: false
+ubtu26cis_rule_5_2_5: false
+ubtu26cis_rule_5_2_6: false
+ubtu26cis_rule_5_2_7: false
+
+# PAM (5.3.x)
+ubtu26cis_rule_5_3_1_1: false
+ubtu26cis_rule_5_3_1_2: false
+ubtu26cis_rule_5_3_1_3: false
+ubtu26cis_rule_5_3_1_4: false
+ubtu26cis_rule_5_3_2_1: false
+ubtu26cis_rule_5_3_2_2: false
+ubtu26cis_rule_5_3_2_3: false
+ubtu26cis_rule_5_3_2_4: false
+ubtu26cis_rule_5_3_3_1_1: false
+ubtu26cis_rule_5_3_3_1_2: false
+ubtu26cis_rule_5_3_3_1_3: false
+ubtu26cis_rule_5_3_3_2_1: false
+ubtu26cis_rule_5_3_3_2_2: false
+ubtu26cis_rule_5_3_3_2_3: false
+ubtu26cis_rule_5_3_3_2_4: false
+ubtu26cis_rule_5_3_3_2_5: false
+ubtu26cis_rule_5_3_3_2_6: false
+ubtu26cis_rule_5_3_3_2_7: false
+ubtu26cis_rule_5_3_3_2_8: false
+ubtu26cis_rule_5_3_3_3_1: false
+ubtu26cis_rule_5_3_3_3_2: false
+ubtu26cis_rule_5_3_3_3_3: false
+ubtu26cis_rule_5_3_3_4_1: false
+ubtu26cis_rule_5_3_3_4_2: false
+ubtu26cis_rule_5_3_3_4_3: false
+ubtu26cis_rule_5_3_3_4_4: false
+
+# User accounts and environment (5.4.x)
+ubtu26cis_rule_5_4_1_1: false
+ubtu26cis_rule_5_4_1_2: false
+ubtu26cis_rule_5_4_1_3: false
+ubtu26cis_rule_5_4_1_4: false
+ubtu26cis_rule_5_4_1_5: false
+ubtu26cis_rule_5_4_1_6: false
+ubtu26cis_rule_5_4_2_1: false
+ubtu26cis_rule_5_4_2_2: false
+ubtu26cis_rule_5_4_2_3: false
+ubtu26cis_rule_5_4_2_4: false
+ubtu26cis_rule_5_4_2_5: false
+ubtu26cis_rule_5_4_2_6: false
+ubtu26cis_rule_5_4_2_7: false
+ubtu26cis_rule_5_4_2_8: false
+ubtu26cis_rule_5_4_3_1: false
+ubtu26cis_rule_5_4_3_2: false
+ubtu26cis_rule_5_4_3_3: false
+
+# compliance_facts.j2 embeds a Benchmark_run_date timestamp, so writing the
+# facts file is never idempotent. Must be false on containers.
+create_benchmark_facts: false
+
+# Bootloader - no GRUB in a container
+ubtu26cis_rule_1_4_1: false
+ubtu26cis_rule_1_4_2: false

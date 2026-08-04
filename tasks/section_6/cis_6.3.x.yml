@@ -1,0 +1,166 @@
+---
+
+- name: "6.3.1 | PATCH | Ensure AIDE is installed"
+  when:
+    - ubtu26cis_rule_6_3_1
+    - ubtu26cis_config_aide
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_6.3.1
+    - aide
+  block:
+    - name: "6.3.1 | PATCH | Ensure AIDE is installed"
+      when: "'aide' not in ansible_facts['packages'] or 'aide-common' not in ansible_facts['packages']"
+      ansible.builtin.package:
+        name: ['aide', 'aide-common']
+        state: present
+        update_cache: true
+        install_recommends: false
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+      register: discovered_aide_pkgs_added
+
+    - name: "6.3.1 | PATCH | Ensure AIDE is installed | Recapture packages"
+      when: discovered_aide_pkgs_added.skipped is not defined
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: "6.3.1 | AUDIT | Ensure AIDE is installed | Check file exists"
+      ansible.builtin.stat:
+        path: "{{ ubtu26cis_aide_db_file }}"
+      register: discovered_aide_db_file
+
+    - name: "6.3.1 | AUDIT | Ensure AIDE is installed | Check current db file age"
+      when: discovered_aide_db_file.stat.exists
+      ansible.builtin.find:
+        path: "{{ ubtu26cis_aide_db_file | dirname }}"
+        pattern: "{{ ubtu26cis_aide_db_file | basename }}"
+        age: "{{ ubtu26cis_aide_db_file_age }}"
+      register: discovered_aide_db_age
+
+    - name: "6.3.1 | PATCH | Ensure AIDE is installed | Configure AIDE"
+      when:
+        - not ansible_check_mode
+        - not discovered_aide_db_file.stat.exists or
+          (discovered_aide_db_age.files | length > 0) or
+          ubtu26cis_aide_db_recreate
+      block:
+        - name: "6.3.1 | PATCH | Ensure AIDE is installed | Remove current db file"
+          ansible.builtin.file:
+            path: "{{ ubtu26cis_aide_db_file }}"
+            state: absent
+
+        - name: "6.3.1 | PATCH | Ensure AIDE is installed | Configure AIDE"
+          when: not ansible_check_mode
+          ansible.builtin.command: "{{ aide_initiate_command }}"
+          changed_when: true
+          args:
+            creates: "{{ ubtu26cis_aide_db_file }}"
+          async: "{{ ubtu26cis_aide_init_async }}"
+          poll: "{{ ubtu26cis_aide_init_poll }}"
+
+    - name: "6.3.1 | PATCH | Ensure AIDE is installed | Ensure AIDE logfiles have the appropriate permissions"
+      block:
+        - name: "6.3.1 | AUDIT | Ensure AIDE is installed | Ensure AIDE logfiles have the appropriate permissions | Find AIDE logfiles"
+          ansible.builtin.find:
+            paths: /var/log/aide
+            patterns: "*.log"
+          check_mode: false
+          register: discovered_aide_logfiles
+
+        - name: "6.3.1 | PATCH | Ensure AIDE is installed | Ensure AIDE logfiles have the appropriate permissions | Apply the permissions"
+          ansible.builtin.file:
+            path: "{{ item.path }}"
+            mode: 'u-x,g-wx,o-rwx'
+          loop: "{{ discovered_aide_logfiles.files }}"
+          loop_control:
+            label: "{{ item }}"
+          failed_when: discovered_aide_file_exists.state not in '[ file, absent ]'
+          register: discovered_aide_file_exists
+
+- name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked"
+  when:
+    - ubtu26cis_config_aide
+    - ubtu26cis_rule_6_3_2
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_6.3.2
+    - NIST800-53R5_AU-2
+    - cron
+    - aide
+  block:
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | cron"
+      when: ubtu26cis_aide_scan == 'cron'
+      ansible.builtin.cron:
+        name: Run AIDE integrity check
+        cron_file: "{{ ubtu26cis_aide_cron_file }}"
+        user: "{{ ubtu26cis_aide_cron_user }}"
+        minute: "{{ ubtu26cis_aide_cron_minute | default('0') }}"
+        hour: "{{ ubtu26cis_aide_cron_hour | default('5') }}"
+        day: "{{ ubtu26cis_aide_cron_day | default('*') }}"
+        month: "{{ ubtu26cis_aide_cron_month | default('*') }}"
+        weekday: "{{ ubtu26cis_aide_cron_weekday | default('*') }}"
+        job: "{{ ubtu26cis_aide_cron_job }}"
+
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | cron service"
+      when: ubtu26cis_aide_scan == 'cron'
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+        daemon_reload: true
+      loop:
+        - dailyaidecheck.service
+        - dailyaidecheck.timer
+
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | timer template"
+      when: ubtu26cis_aide_scan == 'timer'
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/{{ item }}"
+        owner: root
+        group: root
+        mode: 'u-x,g-wx,o-rwx'
+      loop:
+        - etc/systemd/system/dailyaidecheck.service
+        - etc/systemd/system/dailyaidecheck.timer
+
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | timer service"
+      when: ubtu26cis_aide_scan == 'timer'
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+      loop:
+        - dailyaidecheck.service
+        - dailyaidecheck.timer
+      loop_control:
+        label: "{{ item }}"
+
+- name: "6.3.3 | PATCH | Ensure cryptographic mechanisms are used to protect the integrity of audit tools"
+  when:
+    - ubtu26cis_rule_6_3_3
+    - ubtu26cis_config_aide
+  tags:
+    - level1-server
+    - level1-workstation
+    - aide
+    - file_integrity
+    - patch
+    - rule_6.3.3
+    - NIST800-53R5_NA
+  ansible.builtin.blockinfile:
+    path: /etc/aide/aide.conf
+    marker: "# {mark} Audit tools - CIS benchmark - Ansible-lockdown"
+    block: |
+      /usr/sbin/auditctl p+i+n+u+g+s+b+acl+xattrs+sha512
+      /usr/sbin/auditd p+i+n+u+g+s+b+acl+xattrs+sha512
+      /usr/sbin/ausearch p+i+n+u+g+s+b+acl+xattrs+sha512
+      /usr/sbin/aureport p+i+n+u+g+s+b+acl+xattrs+sha512
+      /usr/sbin/autrace p+i+n+u+g+s+b+acl+xattrs+sha512
+      /usr/sbin/augenrules p+i+n+u+g+s+b+acl+xattrs+sha512
+    validate: aide -D --config %s

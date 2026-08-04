@@ -1,0 +1,6 @@
+{{ file_managed_by_ansible }}
+
+cat <<EOF
+set superusers="{{ ubtu26cis_grub_user }}"
+password_pbkdf2 {{ ubtu26cis_grub_user }} {{ ubtu26cis_bootloader_password_hash }}
+EOF

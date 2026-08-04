@@ -1,0 +1,11 @@
+{{ file_managed_by_ansible }}
+
+[Unit]
+Description=Daily AIDE check
+
+[Timer]
+OnCalendar={{ ubtu26cis_aide_cron_day }}-{{ ubtu26cis_aide_cron_month }}-{{ ubtu26cis_aide_cron_weekday }} {{ ubtu26cis_aide_cron_hour }}:{{ ubtu26cis_aide_cron_minute }}:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

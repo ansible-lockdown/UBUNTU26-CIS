@@ -1,0 +1,247 @@
+---
+
+- name: Check OS version and family
+  when:
+    - os_check
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - ansible_facts['distribution_major_version'] is version_compare('26', '!=')
+  tags: always
+  ansible.builtin.fail:
+    msg: "This role can only be run against Ubuntu 26. {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_major_version'] }} is not supported."
+
+- name: Check ansible version
+  tags: always
+  ansible.builtin.assert:
+    that: ansible_version.full is version_compare(min_ansible_version, '>=')
+    fail_msg: "You must use Ansible {{ min_ansible_version }} or greater"
+    success_msg: "This role is running a supported version of ansible {{ ansible_version.full }} >= {{ min_ansible_version }}"
+
+#  This control should always run as this can pass on unintended issues.
+- name: "Check password set for {{ ubtu26cis_playbook_user }} | password state"  # noqa name[template]
+  when:
+    - ubtu26cis_playbook_user != 'root'
+    - ubtu26cis_rule_5_2_4
+    - ansible_facts['env']['SUDO_USER'] is defined
+    - not system_is_ec2
+  tags: always
+  no_log: true
+  vars:
+    sudo_password_rule: ubtu26cis_rule_5_2_4  # pragma: allowlist secret
+  block:
+    - name: "Check password set for {{ ubtu26cis_playbook_user }} | password state"  # noqa name[template]
+      ansible.builtin.shell: |
+          set -o pipefail
+          (grep {{ ubtu26cis_playbook_user }} /etc/shadow || echo 'not found:not found') | awk -F: '{print $2}'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      register: prelim_ansible_user_password_set
+
+    - name: "Check for local account {{ ubtu26cis_playbook_user }} | Check for local account"  # noqa name[template]
+      when: prelim_ansible_user_password_set.stdout == "not found"
+      ansible.builtin.debug:
+        msg: "No local account found for {{ ubtu26cis_playbook_user }} user. Skipping local account checks."
+
+    - name: "Check local account"
+      block:
+        - name: "Check password set for {{ ubtu26cis_playbook_user }} | Assert local password set"  # noqa name[template]
+          ansible.builtin.assert:
+            that:
+              - prelim_ansible_user_password_set.stdout | length != 0
+              - prelim_ansible_user_password_set.stdout != "!!"
+            fail_msg: "You have {{ sudo_password_rule }} enabled but the user = {{ ubtu26cis_playbook_user }} has no password set - It can break access"
+            success_msg: "You have a password set for the {{ ubtu26cis_playbook_user }} user"
+
+        - name: "Check account is not locked for {{ ubtu26cis_playbook_user }} | Assert local account not locked"  # noqa name[template]
+          when: prelim_ansible_user_password_set.stdout != "not found"
+          ansible.builtin.assert:
+            that: not prelim_ansible_user_password_set.stdout.startswith("!")
+            fail_msg: "You have {{ sudo_password_rule }} enabled but the user = {{ ubtu26cis_playbook_user }} is locked - It can break access"
+            success_msg: "The local account is not locked for {{ ubtu26cis_playbook_user }} user"
+
+- name: Ensure root password is set
+  when:
+    - ubtu26cis_section5
+    - ubtu26cis_rule_5_4_2_4
+  tags: always
+  block:
+    - name: Ensure root password is set
+      ansible.builtin.shell: |
+        set -o pipefail
+        LC_ALL=C passwd -S root | grep -E "(Password set, SHA512 crypt|root P |root L |Password locked)"
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: prelim_root_passwd_set.rc not in [0, 1]
+      check_mode: false
+      register: prelim_root_passwd_set
+
+    - name: Ensure root password is set
+      ansible.builtin.assert:
+        that: prelim_root_passwd_set.rc == 0
+        fail_msg: "You have rule 5.4.2.4 enabled this requires that you have a root password set - Please manually set a root password"
+        success_msg: "You have a root password set"
+
+- name: Check ubtu26cis_bootloader_password_hash variable has been changed
+  when:
+    - ubtu26cis_set_boot_pass
+    - ubtu26cis_rule_1_4_1
+  tags: always
+  ansible.builtin.assert:
+    that: ubtu26cis_bootloader_password_hash.find('grub.pbkdf2.sha512') != -1 and ubtu26cis_bootloader_password_hash != 'grub.pbkdf2.sha512.changethispassword'  # pragma: allowlist secret
+    msg: "This role will not be able to run single user password commands as ubtu26cis_bootloader_password_hash variable has not been set correctly"
+
+- name: Setup rules if container
+  when:
+    - ansible_connection in ['docker', 'community.docker.docker'] or
+      (ansible_facts['virtualization_type'] is defined and
+       ansible_facts['virtualization_type'] in ["docker", "lxc", "openvz", "podman", "container"])
+  tags: always
+  block:
+    - name: Discover and set container variable if required
+      ansible.builtin.set_fact:
+        system_is_container: true
+
+    - name: Load variable for container
+      ansible.builtin.include_vars:
+        file: "{{ container_vars_file }}"
+
+    - name: Output if discovered is a container
+      when: system_is_container
+      ansible.builtin.debug:
+        msg: system has been discovered as a container
+
+- name: Gather the package facts before prelim
+  tags: always
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Run prelim tasks
+  tags: always
+  ansible.builtin.import_tasks:
+    file: prelim.yml
+
+- name: Gather the package facts after prelim
+  tags: always
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Run parse /etc/passwd
+  when:
+    - ubtu26cis_section5 or
+      ubtu26cis_section6 or
+      ubtu26cis_section7
+  tags: always
+  ansible.builtin.import_tasks:
+    file: parse_etc_password.yml
+
+- name: Include section 1 patches
+  when: ubtu26cis_section1
+  ansible.builtin.import_tasks:
+    file: section_1/main.yml
+
+- name: Include section 2 patches
+  when: ubtu26cis_section2
+  ansible.builtin.import_tasks:
+    file: section_2/main.yml
+
+- name: Include section 3 patches
+  when: ubtu26cis_section3
+  ansible.builtin.import_tasks:
+    file: section_3/main.yml
+
+- name: Include section 4 patches
+  when: ubtu26cis_section4
+  ansible.builtin.import_tasks:
+    file: section_4/main.yml
+
+- name: Include section 5 patches
+  when: ubtu26cis_section5
+  ansible.builtin.import_tasks:
+    file: section_5/main.yml
+
+- name: Include section 6 patches
+  when: ubtu26cis_section6
+  ansible.builtin.import_tasks:
+    file: section_6/main.yml
+
+- name: Include section 7 patches
+  when: ubtu26cis_section7
+  ansible.builtin.import_tasks:
+    file: section_7/main.yml
+
+- name: Run auditd logic
+  when: update_audit_template
+  tags: always
+  ansible.builtin.import_tasks:
+    file: auditd.yml
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Reboot system
+  when: change_requires_reboot
+  tags: always
+  block:
+    - name: Reboot system if not skipped
+      when: not skip_reboot
+      ansible.builtin.reboot:
+
+    - name: Warning a reboot required but skip option set
+      when: skip_reboot
+      ansible.builtin.debug:
+        msg: "Warning!! changes have been made that require a reboot to be implemented but skip reboot was set - Can affect compliance check results"
+      changed_when: true
+
+- name: Run post remediation audit
+  when: run_audit
+  tags: run_audit
+  ansible.builtin.import_tasks:
+    file: post_remediation_audit.yml
+
+- name: Add ansible file showing Benchmark and levels applied if audit details not present
+  when:
+    - create_benchmark_facts
+    - (post_audit_summary is defined) or
+      (ansible_local['compliance_facts']['lockdown_audit_details']['audit_summary'] is undefined and post_audit_summary is undefined)
+  tags:
+    - always
+    - benchmark
+  block:
+    - name: Create ansible facts directory if audit facts not present
+      ansible.builtin.file:
+        path: "{{ ansible_facts_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 'go-w'
+
+    - name: Create ansible facts file and levels applied if audit facts not present
+      ansible.builtin.template:
+        src: etc/ansible/compliance_facts.j2
+        dest: "{{ ansible_facts_path }}/compliance_facts.fact"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+
+- name: Fetch audit files
+  when:
+    - fetch_audit_output
+    - run_audit
+  tags: always
+  ansible.builtin.import_tasks:
+    file: fetch_audit_output.yml
+
+- name: Show Audit Summary
+  when: run_audit
+  tags: run_audit
+  ansible.builtin.debug:
+    msg: "{{ audit_results.split('\n') }}"
+
+- name: If Warnings found Output count and control IDs affected
+  when: warn_count != 0
+  tags: always
+  ansible.builtin.debug:
+    msg: "You have {{ warn_count }} Warning(s) that require investigating that are related to the following benchmark ID(s) {{ warn_control_list }}"

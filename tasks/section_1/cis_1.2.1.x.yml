@@ -1,0 +1,317 @@
+---
+
+- name: "1.2.1.1 | AUDIT | Ensure the source.list and .source files use the Signed-By option"
+  when: ubtu26cis_rule_1_2_1_1
+  tags:
+    - level1-server
+    - level1-workstation
+    - audit
+    - rule_1.2.1.1
+    - NIST800-53R5_SI-2
+    - apt
+  vars:
+    warn_control_id: '1.2.1.1'
+  block:
+    - name: "1.2.1.1 | AUDIT | Ensure the source.list and .source files use the Signed-By option | Get source files"
+      ansible.builtin.shell: |
+        set -o pipefail
+        grep -PsL -- '^\h*Signed-By\h*:\h*\S+' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: discovered_apt_signedby.rc not in [0, 1]
+      check_mode: false
+      register: discovered_apt_signedby
+
+    - name: "1.2.1.1 | AUDIT | Ensure the source.list and .source files use the Signed-By option | Message out non-conforming files"
+      when: discovered_apt_signedby.stdout | length > 0
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! Below are source list files that do not use the Signed-By option"
+          - "Please review to make sure they are configured in accordance with site policy"
+          - "{{ discovered_apt_signedby.stdout_lines }}"
+
+    - name: "1.2.1.1 | WARN | Ensure the source.list and .source files use the Signed-By option | warn_count"
+      when: discovered_apt_signedby.stdout | length > 0
+      ansible.builtin.import_tasks:
+        file: warning_facts.yml
+
+- name: "1.2.1.2 | PATCH | Ensure weak dependencies are configured"
+  when: ubtu26cis_rule_1_2_1_2
+  tags:
+    - level2-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.2
+    - NIST800-53R5_CM-7
+    - apt
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/60-no-weak-dependencies
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: true
+    mode: 'go-wx'
+  loop:
+    - { regexp: '^(#)?\s*APT::Install-Recommends', line: 'APT::Install-Recommends "0";' }
+    - { regexp: '^(#)?\s*APT::Install-Suggests', line: 'APT::Install-Suggests "0";' }
+  loop_control:
+    label: "{{ item.line }}"
+
+- name: "1.2.1.3 | AUDIT | Ensure access to gpg key files are configured"
+  when: ubtu26cis_rule_1_2_1_3
+  tags:
+    - level1-server
+    - level1-workstation
+    - audit
+    - rule_1.2.1.3
+    - NIST800-53R5_AC-6
+    - permissions
+    - gpg
+  vars:
+    warn_control_id: '1.2.1.3'
+  block:
+    - name: "1.2.1.3 | AUDIT | Ensure access to gpg key files are configured | Discover non-conforming gpg key files"
+      ansible.builtin.shell: |
+        set -o pipefail
+        find /etc/apt/trusted.gpg.d /usr/share/keyrings -type f \( -name "*.gpg" -o -name "*.asc" \) 2>/dev/null | xargs -r stat -c '%U:%G:%a:%n' | grep -Pv -- '^root:root:0[0-6]{2}:'
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: discovered_gpg_key_perms.rc not in [0, 1]
+      check_mode: false
+      register: discovered_gpg_key_perms
+
+    - name: "1.2.1.3 | AUDIT | Ensure access to gpg key files are configured | Message out non-conforming gpg key files"
+      when: discovered_gpg_key_perms.stdout | length > 0
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! Below are gpg key files with non-conforming permissions"
+          - "Please review and correct ownership root:root and mode u-x,go-wx"
+          - "{{ discovered_gpg_key_perms.stdout_lines }}"
+
+    - name: "1.2.1.3 | WARN | Ensure access to gpg key files are configured | warn_count"
+      when: discovered_gpg_key_perms.stdout | length > 0
+      ansible.builtin.import_tasks:
+        file: warning_facts.yml
+
+- name: "1.2.1.4 | PATCH | Ensure access to /etc/apt/trusted.gpg.d directory is configured"
+  when: ubtu26cis_rule_1_2_1_4
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.4
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "1.2.1.5 | PATCH | Ensure access to /etc/apt/auth.conf.d directory is configured"
+  when: ubtu26cis_rule_1_2_1_5
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.5
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.file:
+    path: /etc/apt/auth.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "1.2.1.6 | PATCH | Ensure access to files in the /etc/apt/auth.conf.d/ directory is configured"
+  when: ubtu26cis_rule_1_2_1_6
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.6
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.shell: |
+    set -o pipefail
+    chown root:root /etc/apt/auth.conf.d/*.conf 2>/dev/null
+    chmod u-x,g-wx,o-rwx /etc/apt/auth.conf.d/*.conf 2>/dev/null
+    true
+  args:
+    executable: "{{ ubtu26cis_shell_executable }}"
+  changed_when: false
+
+- name: "1.2.1.7 | PATCH | Ensure access to /usr/share/keyrings directory is configured"
+  when: ubtu26cis_rule_1_2_1_7
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.7
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.file:
+    path: /usr/share/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "1.2.1.8 | PATCH | Ensure access to /etc/apt/sources.list.d directory is configured"
+  when: ubtu26cis_rule_1_2_1_8
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.8
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "1.2.1.9 | PATCH | Ensure access to files in /etc/apt/sources.list.d are configured"
+  when: ubtu26cis_rule_1_2_1_9
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_1.2.1.9
+    - NIST800-53R5_AC-6
+    - permissions
+  ansible.builtin.shell: |
+    set -o pipefail
+    chown root:root /etc/apt/sources.list.d/* 2>/dev/null
+    chmod u-x,go-wx /etc/apt/sources.list.d/* 2>/dev/null
+    true
+  args:
+    executable: "{{ ubtu26cis_shell_executable }}"
+  changed_when: false
+
+- name: "1.2.1.10 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list"
+  when: ubtu26cis_rule_1_2_1_10
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.10
+    - NIST800-53R5_SC-8
+    - apt
+  block:
+    - name: "1.2.1.10 | AUDIT | Ensure repositories are set to https in /etc/apt/sources.list | Check file exists"
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list
+      register: discovered_apt_sources_list
+
+    - name: "1.2.1.10 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list | Set https"
+      when: discovered_apt_sources_list.stat.exists
+      ansible.builtin.replace:
+        path: /etc/apt/sources.list
+        regexp: '^(deb(-src)?\s+)http:\/\/'
+        replace: '\1https://'
+
+- name: "1.2.1.11 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list.d directory"
+  when: ubtu26cis_rule_1_2_1_11
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.11
+    - NIST800-53R5_SC-8
+    - apt
+  block:
+    - name: "1.2.1.11 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list.d directory | Discover files"
+      ansible.builtin.find:
+        paths: /etc/apt/sources.list.d
+        patterns: '*.list,*.sources'
+      register: discovered_apt_sources_list_d_files
+
+    - name: "1.2.1.11 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list.d directory | legacy .list format"
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: '^(deb(-src)?\s+)http:\/\/'
+        replace: '\1https://'
+      loop: "{{ discovered_apt_sources_list_d_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+      when: item.path.endswith('.list')
+
+    - name: "1.2.1.11 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list.d directory | deb822 .sources format"
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: '^(URIs:\s+)http:\/\/'
+        replace: '\1https://'
+      loop: "{{ discovered_apt_sources_list_d_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+      when: item.path.endswith('.sources')
+
+- name: "1.2.1.12 | PATCH | Ensure AllowInsecureRepositories is configured"
+  when: ubtu26cis_rule_1_2_1_12
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.12
+    - NIST800-53R5_CM-7
+    - apt
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/99-no-insecure-repositories
+    regexp: '^(#)?\s*Acquire::AllowInsecureRepositories'
+    line: 'Acquire::AllowInsecureRepositories "0";'
+    create: true
+    mode: 'go-wx'
+
+- name: "1.2.1.13 | PATCH | Ensure AllowWeakRepositories is configured"
+  when: ubtu26cis_rule_1_2_1_13
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.13
+    - NIST800-53R5_CM-7
+    - apt
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/99-no-insecure-repositories
+    regexp: '^(#)?\s*Acquire::AllowWeakRepositories'
+    line: 'Acquire::AllowWeakRepositories "0";'
+    create: true
+    mode: 'go-wx'
+
+- name: "1.2.1.14 | PATCH | Ensure AllowDowngradeToInsecureRepositories is configured"
+  when: ubtu26cis_rule_1_2_1_14
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.14
+    - NIST800-53R5_CM-7
+    - apt
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/99-no-insecure-repositories
+    regexp: '^(#)?\s*Acquire::AllowDowngradeToInsecureRepositories'
+    line: 'Acquire::AllowDowngradeToInsecureRepositories "0";'
+    create: true
+    mode: 'go-wx'
+
+- name: "1.2.1.15 | PATCH | Ensure Acquire::Check-Date is configured"
+  when: ubtu26cis_rule_1_2_1_15
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.2.1.15
+    - NIST800-53R5_CM-7
+    - apt
+  ansible.builtin.lineinfile:
+    path: /etc/apt/apt.conf.d/99-no-insecure-repositories
+    regexp: '^(#)?\s*Acquire::Check-Date'
+    line: 'Acquire::Check-Date "true";'
+    create: true
+    mode: 'go-wx'

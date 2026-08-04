@@ -1,0 +1,246 @@
+---
+
+- name: "1.6.1 | PATCH | Ensure /etc/motd is configured"
+  when: ubtu26cis_rule_1_6_1
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.1
+    - NIST800-53R5_CM-1
+    - NIST800-53R5_CM-3
+    - NIST800-53R5_CM-6
+    - motd
+  ansible.builtin.template:
+    src: etc/motd.j2
+    dest: /etc/motd
+    mode: 'u-x,go-wx'
+
+- name: "1.6.2 | PATCH | Ensure /etc/issue is configured"
+  when: ubtu26cis_rule_1_6_2
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.2
+    - NIST800-53R5_CM-1
+    - NIST800-53R5_CM-3
+    - NIST800-53R5_CM-6
+    - banner
+  block:
+    - name: "1.6.2 | PATCH | Ensure /etc/issue is configured | issue"
+      ansible.builtin.template:
+        src: etc/issue.j2
+        dest: /etc/issue
+        mode: 'u-x,go-wx'
+
+    - name: "1.6.2 | PATCH | Ensure /etc/issue is configured | issue"
+      community.general.dpkg_divert:
+        path: /etc/issue
+
+- name: "1.6.3 | PATCH | Ensure /etc/issue.net is configured"
+  when: ubtu26cis_rule_1_6_3
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.3
+    - NIST800-53R5_CM-1
+    - NIST800-53R5_CM-3
+    - NIST800-53R5_CM-6
+    - banner
+  block:
+    - name: "1.6.3 | PATCH | Ensure /etc/issue.net is configured | issue.net"
+      ansible.builtin.template:
+        src: etc/issue.net.j2
+        dest: /etc/issue.net
+        mode: 'u-x,go-wx'
+
+    - name: "1.6.3 | PATCH | Ensure /etc/issue.net is configured | issue.net"
+      community.general.dpkg_divert:
+        path: /etc/issue.net
+
+- name: "1.6.4 | PATCH | Ensure pam_motd is configured"
+  when:
+    - ubtu26cis_rule_1_6_4
+    - ubtu26cis_disable_dynamic_motd
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.4
+    - NIST800-53R5_CM-1
+    - NIST800-53R5_CM-3
+    - NIST800-53R5_CM-6
+    - motd
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backrefs: true
+  loop:
+    - { regexp: '(session\s+optional\s+pam_motd.so\s+motd=/run/motd.dynamic)', line: '# \1' }
+    - { regexp: '(session\s+optional\s+pam_motd.so noupdate)', line: '# \1' }
+    - { regexp: '# Pam_motd.so disabled for CIS benchmark', line: '# Pam_motd.so disabled for CIS benchmark' }
+  loop_control:
+    label: "{{ item }}"
+
+- name: "1.6.5 | PATCH | Ensure sshd warning Banner is configured"
+  when: ubtu26cis_rule_1_6_5
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.5
+    - NIST800-53R5_CM-1
+    - NIST800-53R5_CM-3
+    - NIST800-53R5_CM-6
+    - banner
+    - sshd
+  ansible.builtin.template:
+    src: etc/issue.net.j2
+    dest: "{{ ubtu26cis_sshd_banner_file }}"
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "1.6.6 | PATCH | Ensure access to /etc/motd is configured"
+  when: ubtu26cis_rule_1_6_6
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.6
+    - NIST800-53R5_AC-3
+    - NIST800-53R5_MP-2
+    - permissions
+    - motd
+  ansible.builtin.file:
+    path: /etc/motd
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "1.6.7 | PATCH | Ensure access to /etc/issue is configured"
+  when: ubtu26cis_rule_1_6_7
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.7
+    - NIST800-53R5_AC-3
+    - NIST800-53R5_MP-2
+    - permissions
+    - banner
+  ansible.builtin.file:
+    path: /etc/issue
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "1.6.8 | PATCH | Ensure access to /etc/issue.net is configured"
+  when: ubtu26cis_rule_1_6_8
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.8
+    - NIST800-53R5_AC-3
+    - NIST800-53R5_MP-2
+    - permissions
+    - banner
+  ansible.builtin.file:
+    path: /etc/issue.net
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "1.6.9 | PATCH | Ensure access to pam_motd file is configured"
+  when: ubtu26cis_rule_1_6_9
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.9
+    - NIST800-53R5_AC-3
+    - NIST800-53R5_MP-2
+    - permissions
+    - motd
+  block:
+    - name: "1.6.9 | AUDIT | Ensure access to pam_motd file is configured | Discover pam_motd paths"
+      # pam.d may reference a motd path that does not exist - e.g. /run/motd.dynamic
+      # once 1.6.4 has disabled dynamic motd - so only emit paths present on disk.
+      ansible.builtin.shell: |
+        set -o pipefail
+        grep -hPo 'motd=\K\S+' /etc/pam.d/* | sort -u | while read -r f; do [ -e "$f" ] && echo "$f"; done
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: discovered_pam_motd_files.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_motd_files
+
+    - name: "1.6.9 | PATCH | Ensure access to pam_motd file is configured | Set permissions"
+      when: discovered_pam_motd_files.stdout_lines | length > 0
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop: "{{ discovered_pam_motd_files.stdout_lines }}"
+      loop_control:
+        label: "{{ item }}"
+
+- name: "1.6.10 | PATCH | Ensure access to sshd warning banner is configured"
+  when: ubtu26cis_rule_1_6_10
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.10
+    - NIST800-53R5_AC-3
+    - NIST800-53R5_MP-2
+    - permissions
+    - banner
+  ansible.builtin.file:
+    path: /etc/issue.net
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
+
+- name: "1.6.11 | PATCH | Ensure update-notifier-motd.service is not in use"
+  when: ubtu26cis_rule_1_6_11
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_1.6.11
+    - NIST800-53R5_CM-7
+    - motd
+  ansible.builtin.systemd:
+    name: update-notifier-motd.service
+    state: stopped
+    enabled: false
+    masked: true
+  register: discovered_update_notifier_motd_service
+  failed_when:
+    - discovered_update_notifier_motd_service.failed
+    - '"Could not find the requested service" not in discovered_update_notifier_motd_service.msg'
+
+- name: "1.6.12 | PATCH | Ensure update-notifier-motd.timer is not in use"
+  when: ubtu26cis_rule_1_6_12
+  tags:
+    - level1-server
+    - patch
+    - rule_1.6.12
+    - NIST800-53R5_CM-7
+    - motd
+  ansible.builtin.systemd:
+    name: update-notifier-motd.timer
+    state: stopped
+    enabled: false
+    masked: true
+  register: discovered_update_notifier_motd_timer
+  failed_when:
+    - discovered_update_notifier_motd_timer.failed
+    - '"Could not find the requested service" not in discovered_update_notifier_motd_timer.msg'

@@ -1,0 +1,209 @@
+---
+
+- name: "6.2.4.1/2/3/4| AUDIT | Capture logfile location"
+  when:
+    - ubtu26cis_rule_6_2_4_1 or
+      ubtu26cis_rule_6_2_4_2 or
+      ubtu26cis_rule_6_2_4_3 or
+      ubtu26cis_rule_6_2_4_4
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.1
+    - rule_6.2.4.2
+    - rule_6.2.4.3
+    - rule_6.2.4.4
+    - NIST800-53R5_AU-3
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep ^log_file /etc/audit/auditd.conf | awk '{ print $NF }'
+  args:
+    executable: "{{ ubtu26cis_shell_executable }}"
+  changed_when: false
+  check_mode: false
+  failed_when: discovered_auditd_logfile.rc not in [ 0, 1 ]
+  register: discovered_auditd_logfile
+
+- name: "6.2.4.5/6/7 | AUDIT | Audit conf and rules files | list files"
+  when:
+    - ubtu26cis_rule_6_2_4_5 or
+      ubtu26cis_rule_6_2_4_6 or
+      ubtu26cis_rule_6_2_4_7
+  ansible.builtin.find:
+    path: /etc/audit/
+    file_type: file
+    recurse: true
+    patterns: '*.conf,*.rules'
+  register: discovered_auditd_conf_file
+
+- name: "6.2.4.1 | PATCH | Ensure audit log files mode is configured"
+  when: ubtu26cis_rule_6_2_4_1
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.1
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ discovered_auditd_logfile.stdout | dirname }}"
+    recurse: true
+    mode: 'u-x,g-wx,o-rwx'
+
+- name: "6.2.4.2 | PATCH | Ensure audit log files owner is configured"
+  when: ubtu26cis_rule_6_2_4_2
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.2
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ discovered_auditd_logfile.stdout | dirname }}"
+    recurse: true
+    owner: root
+
+- name: "6.2.4.3 | PATCH | Ensure audit log files group owner is configured"
+  when: ubtu26cis_rule_6_2_4_3
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.3
+    - NIST800-53R5_AU-3
+  block:
+    - name: "6.2.4.3 | AUDIT | Ensure audit log files group owner is configured | stat logfile"
+      ansible.builtin.find:
+        path: "{{ discovered_auditd_logfile.stdout | dirname }}"
+        file_type: file
+      register: discovered_auditd_logs
+
+    - name: "6.2.4.3 | PATCH | Ensure audit log files group owner is configured"
+      when: item.gr_name not in [ 'root', 'adm' ]
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        group: root
+      loop: "{{ discovered_auditd_logs.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+- name: "6.2.4.4 | PATCH | Ensure the audit log file directory mode is configured"
+  when: ubtu26cis_rule_6_2_4_4
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.4
+    - NIST800-53R5_AU-3
+  block:
+    - name: "6.2.4.4 | AUDIT | Ensure the audit log file directory mode is configured | get current permissions"
+      ansible.builtin.stat:
+        path: "{{ discovered_auditd_logfile.stdout | dirname }}"
+      register: discovered_auditlog_dir
+
+    - name: "6.2.4.4 | PATCH | Ensure the audit log file directory mode is configured | set permissions"
+      ansible.builtin.file:
+        path: "{{ discovered_auditlog_dir.stat.path }}"
+        state: directory
+        mode: 'g-w,o-rwx'
+
+- name: "6.2.4.5 | PATCH | Ensure audit configuration files mode is configured"
+  when: ubtu26cis_rule_6_2_4_5
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.5
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: 'u-x,g-wx,o-rwx'
+  loop: "{{ discovered_auditd_conf_file.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: "6.2.4.6 | PATCH | Ensure audit configuration files owner is configured"
+  when: ubtu26cis_rule_6_2_4_6
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.6
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+  loop: "{{ discovered_auditd_conf_file.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: "6.2.4.7 | PATCH | Ensure audit configuration files group owner is configured"
+  when: ubtu26cis_rule_6_2_4_7
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.7
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    group: root
+  loop: "{{ discovered_auditd_conf_file.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: "6.2.4.8 | PATCH | Ensure audit tools mode is configured"
+  when: ubtu26cis_rule_6_2_4_8
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.8
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: 'u+x,g-w,o-rwx'
+  loop: "{{ audit_bins }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: "6.2.4.9 | PATCH | Ensure audit tools owner is configured"
+  when: ubtu26cis_rule_6_2_4_9
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.9
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+  loop: "{{ audit_bins }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: "6.2.4.10 | PATCH | Ensure audit tools group owner is configured"
+  when: ubtu26cis_rule_6_2_4_10
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.10
+    - NIST800-53R5_AU-3
+  ansible.builtin.file:
+    path: "{{ item }}"
+    group: root
+  loop: "{{ audit_bins }}"
+  loop_control:
+    label: "{{ item }}"

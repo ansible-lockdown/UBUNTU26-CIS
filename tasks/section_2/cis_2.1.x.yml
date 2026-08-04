@@ -1,0 +1,816 @@
+---
+
+- name: "2.1.1 | PATCH | Ensure autofs services are not in use"
+  when:
+    - ubtu26cis_rule_2_1_1
+    - "'autofs' in ansible_facts['packages']"
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - rule_2.1.1
+    - NIST800-53R5_SI-3
+    - NIST800-53R5_MP-7
+  block:
+    - name: "2.1.1 | PATCH | Ensure autofs services are not in use | Remove Package"
+      when:
+        - not ubtu26cis_autofs_services
+        - not ubtu26cis_autofs_mask
+      ansible.builtin.package:
+        name: autofs
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.1 | PATCH | Ensure autofs services are not in use | Mask service"
+      when:
+        - not ubtu26cis_autofs_services
+        - ubtu26cis_autofs_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: autofs
+        enabled: "{{ ('autofs' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('autofs' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.2 | PATCH | Ensure avahi daemon services are not in use"
+  when: ubtu26cis_rule_2_1_2
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - avahi
+    - rule_2.1.2
+    - NIST800-53R5_SI-4
+  block:
+    - name: "2.1.2 | PATCH | Ensure avahi daemon services are not in use | Remove package"
+      when:
+        - not ubtu26cis_avahi_server
+        - not ubtu26cis_avahi_mask
+        - "'avahi-daemon' in ansible_facts['packages'] or 'avahi-autoipd' in ansible_facts['packages']"
+      ansible.builtin.package:
+        name:
+          - avahi-autoipd
+          - avahi-daemon
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.2 | PATCH | Ensure avahi daemon services are not in use | Mask service"
+      when:
+        - not ubtu26cis_avahi_server
+        - ubtu26cis_avahi_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('avahi-daemon' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('avahi-daemon' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - avahi-daemon.socket
+        - avahi-daemon.service
+      loop_control:
+        label: "{{ item }}"
+
+- name: "2.1.3 | PATCH | Ensure dhcp server services are not in use"
+  when: ubtu26cis_rule_2_1_3
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - dhcp
+    - rule_2.1.3
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.3 | PATCH | Ensure dhcp server services are not in use | Remove package"
+      when:
+        - not ubtu26cis_dhcp_server
+        - not ubtu26cis_dhcp_mask
+        - "'isc-dhcp-server' in ansible_facts['packages']"
+      ansible.builtin.package:
+        name: isc-dhcp-server
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.3 | PATCH | Ensure dhcp server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_dhcp_server
+        - ubtu26cis_dhcp_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('isc-dhcp-server' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('isc-dhcp-server' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - isc-dhcp-server.service
+        - isc-dhcp-server6.service
+      loop_control:
+        label: "{{ item }}"
+
+- name: "2.1.4 | PATCH | Ensure dns server services are not in use"
+  when: ubtu26cis_rule_2_1_4
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - dns
+    - rule_2.1.4
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.4 | PATCH | Ensure dns server services are not in use | Remove package"
+      when:
+        - "'bind9' in ansible_facts['packages']"
+        - not ubtu26cis_dns_server
+        - not ubtu26cis_dns_mask
+      ansible.builtin.package:
+        name: bind9
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.4 | PATCH | Ensure dns server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_dns_server
+        - ubtu26cis_dns_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: named.service
+        enabled: "{{ ('bind9' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('bind9' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.5 | PATCH | Ensure dnsmasq services are not in use"
+  when: ubtu26cis_rule_2_1_5
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - dns
+    - rule_2.1.5
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.5 | PATCH | Ensure dnsmasq services are not in use | Remove package"
+      when:
+        - "'dnsmasq' in ansible_facts['packages']"
+        - not ubtu26cis_dnsmasq_server
+        - not ubtu26cis_dnsmasq_mask
+      ansible.builtin.package:
+        name: dnsmasq
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.5 | PATCH | Ensure dnsmasq services are not in use | Mask service"
+      when:
+        - not ubtu26cis_dnsmasq_server
+        - ubtu26cis_dnsmasq_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: dnsmasq.service
+        enabled: "{{ ('dnsmasq' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('dnsmasq' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.6 | PATCH | Ensure ftp server services are not in use"
+  when: ubtu26cis_rule_2_1_6
+  tags:
+    - level1-server
+    - level1-workstation
+    - automation
+    - patch
+    - ftp
+    - rule_2.1.6
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.6 | PATCH | Ensure ftp server services are not in use | Remove package"
+      when:
+        - "'vsftp' in ansible_facts['packages']"
+        - not ubtu26cis_ftp_server
+        - not ubtu26cis_ftp_mask
+      ansible.builtin.package:
+        name: vsftpd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.6 | PATCH | Ensure ftp server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_ftp_server
+        - ubtu26cis_ftp_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: vsftpd.service
+        enabled: "{{ ('vsftpd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('vsftpd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.7 | PATCH | Ensure ldap server services are not in use"
+  when: ubtu26cis_rule_2_1_7
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - ldap
+    - rule_2.1.7
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.7 | PATCH | Ensure ldap server services are not in use | Remove package"
+      when:
+        - "'slapd' in ansible_facts['packages']"
+        - not ubtu26cis_ldap_server
+        - not ubtu26cis_ldap_mask
+      ansible.builtin.package:
+        name: slapd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.7 | PATCH | Ensure ldap server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_ldap_server
+        - ubtu26cis_ldap_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: slapd.service
+        enabled: "{{ ('slapd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('slapd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.8 | PATCH | Ensure message access server services are not in use"
+  when: ubtu26cis_rule_2_1_8
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - dovecot
+    - imap
+    - pop3
+    - rule_2.1.8
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.8 | PATCH | Ensure message access server services are not in use | Remove package"
+      when:
+        - "'dovecot-pop3d' in ansible_facts['packages'] or 'dovecot-imapd' in ansible_facts['packages']"
+        - not ubtu26cis_message_server
+        - not ubtu26cis_message_mask
+      ansible.builtin.package:
+        name:
+          - dovecot-pop3d
+          - dovecot-imapd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.8 | PATCH | Ensure message access server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_message_server
+        - ubtu26cis_message_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('dovecot-imapd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('dovecot-imapd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - "dovecot.socket"
+        - "dovecot.service"
+      loop_control:
+        label: "{{ item }}"
+
+- name: "2.1.9 | PATCH | Ensure network file system services are not in use"
+  when: ubtu26cis_rule_2_1_9
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - nfs
+    - services
+    - rule_2.1.9
+    - NIST800-53R5_CM-6
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.9 | PATCH | Ensure network file system services are not in use | Remove package"
+      when:
+        - "'nfs-kernel-server' in ansible_facts['packages']"
+        - not ubtu26cis_nfs_server
+        - not ubtu26cis_nfs_mask
+      ansible.builtin.package:
+        name: nfs-kernel-server
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.9 | PATCH | Ensure network file system services are not in use | Mask service"
+      when:
+        - not ubtu26cis_nfs_server
+        - ubtu26cis_nfs_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: nfs-server.service
+        enabled: "{{ ('nfs-kernel-server' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('nfs-kernel-server' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.10 | PATCH | Ensure nis server services are not in use"
+  when: ubtu26cis_rule_2_1_10
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - nis
+    - rule_2.1.10
+    - NIST800-53R5_CM-7
+  notify: Systemd_daemon_reload
+  block:
+    - name: "2.1.10 | PATCH | Ensure nis server services are not in use | Remove package"
+      when:
+        - "'ypserv' in ansible_facts['packages']"
+        - not ubtu26cis_nis_server
+        - not ubtu26cis_nis_mask
+      ansible.builtin.package:
+        name: ypserv
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.10 | PATCH | Ensure nis server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_nis_server
+        - ubtu26cis_nis_mask
+      ansible.builtin.systemd:
+        name: ypserv.service
+        enabled: "{{ ('ypserv' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('ypserv' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.11 | PATCH | Ensure print server services are not in use"
+  when: ubtu26cis_rule_2_1_11
+  tags:
+    - level1-server
+    - patch
+    - cups
+    - rule_2.1.11
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.11 | PATCH | Ensure print server services are not in use | Remove package"
+      when:
+        - "'cups' in ansible_facts['packages']"
+        - not ubtu26cis_print_server
+        - not ubtu26cis_print_mask
+      ansible.builtin.package:
+        name: cups
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.11 | PATCH | Ensure print server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_print_server
+        - ubtu26cis_print_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('cups' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('cups' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - "cups.socket"
+        - "cups.service"
+      loop_control:
+        label: "{{ item }}"
+
+- name: "2.1.12 | PATCH | Ensure rpcbind services are not in use"
+  when: ubtu26cis_rule_2_1_12
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rpc
+    - rule_2.1.12
+    - NIST800-53R5_CM-6
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.12 | PATCH | Ensure rpcbind services are not in use | Remove package"
+      when:
+        - "'rpcbind' in ansible_facts['packages']"
+        - not ubtu26cis_rpc_server
+        - not ubtu26cis_rpc_mask
+      ansible.builtin.package:
+        name: rpcbind
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.12 | PATCH | Ensure rpcbind services are not in use | Mask service"
+      when:
+        - not ubtu26cis_rpc_server
+        - ubtu26cis_rpc_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('rpcbind' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('rpcbind' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - rpcbind.service
+        - rpcbind.socket
+      loop_control:
+        label: "{{ item }}"
+
+- name: "2.1.13 | PATCH | Ensure rsync services are not in use"
+  when: ubtu26cis_rule_2_1_13
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rsync
+    - rule_2.1.13
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.13 | PATCH | Ensure rsync services are not in use | Remove package"
+      when:
+        - "'rsync' in ansible_facts['packages']"
+        - not ubtu26cis_rsync_server
+        - not ubtu26cis_rsync_mask
+      ansible.builtin.package:
+        name: rsync
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.13 | PATCH | Ensure rsync services are not in use | Mask service"
+      when:
+        - not ubtu26cis_rsync_server
+        - ubtu26cis_rsync_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: rsync.service
+        enabled: "{{ ('rsync' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('rsync' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.14 | PATCH | Ensure samba file server services are not in use"
+  when: ubtu26cis_rule_2_1_14
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - samba
+    - rule_2.1.14
+    - NIST800-53R5_CM-6
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.14 | PATCH | Ensure samba file server services are not in use | Remove package"
+      when:
+        - "'samba' in ansible_facts['packages']"
+        - not ubtu26cis_samba_server
+        - not ubtu26cis_samba_mask
+      ansible.builtin.package:
+        name: samba
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.14 | PATCH | Ensure samba file server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_samba_server
+        - ubtu26cis_samba_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: smbd.service
+        enabled: "{{ ('samba' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('samba' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.15 | PATCH | Ensure snmp services are not in use"
+  when: ubtu26cis_rule_2_1_15
+  tags:
+    - level1-server
+    - level1-workstation
+    - automation
+    - patch
+    - samba
+    - rule_2.1.15
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.15 | PATCH | Ensure snmp services are not in use | Remove package"
+      when:
+        - "'snmpd' in ansible_facts['packages']"
+        - not ubtu26cis_snmp_server
+        - not ubtu26cis_snmp_mask
+      ansible.builtin.package:
+        name: snmpd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.15 | PATCH | Ensure snmp services are not in use | Mask service"
+      when:
+        - not ubtu26cis_snmp_server
+        - ubtu26cis_snmp_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: snmpd.service
+        enabled: "{{ ('snmpd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('snmpd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.16 | PATCH | Ensure telnet server services are not in use"
+  when: ubtu26cis_rule_2_1_16
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - telnet
+    - rule_2.1.16
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.16 | PATCH | Ensure telnet server services are not in use | Remove package"
+      when:
+        - "'telnetd' in ansible_facts['packages']"
+        - not ubtu26cis_telnet_server
+        - not ubtu26cis_telnet_mask
+      ansible.builtin.package:
+        name: telnetd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.16 | PATCH | Ensure telnet server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_telnet_server
+        - ubtu26cis_telnet_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: inetd.service
+        enabled: "{{ ('telnetd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('telnetd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.17 | PATCH | Ensure tftp server services are not in use"
+  when: ubtu26cis_rule_2_1_17
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - tftp
+    - rule_2.1.17
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.17 | PATCH | Ensure tftp server services are not in use | Remove package"
+      when:
+        - "'tftpd-hpa' in ansible_facts['packages']"
+        - not ubtu26cis_tftp_server
+        - not ubtu26cis_tftp_mask
+      ansible.builtin.package:
+        name: tftpd-hpa
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.17 | PATCH | Ensure tftp server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_tftp_server
+        - ubtu26cis_tftp_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: tftpd-hpa.service
+        enabled: "{{ ('tftpd-hpa' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('tftpd-hpa' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.18 | PATCH | Ensure web proxy server services are not in use"
+  when: ubtu26cis_rule_2_1_18
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - squid
+    - rule_2.1.18
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.18 | PATCH | Ensure web proxy server services are not in use | Remove package"
+      when:
+        - "'squid' in ansible_facts['packages']"
+        - not ubtu26cis_squid_server
+        - not ubtu26cis_squid_mask
+      ansible.builtin.package:
+        name: squid
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.18 | PATCH | Ensure web proxy server services are not in use | Mask service"
+      when:
+        - not ubtu26cis_squid_server
+        - ubtu26cis_squid_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: squid.service
+        enabled: "{{ ('squid' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('squid' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.19 | PATCH | Ensure web server services are not in use"
+  when: ubtu26cis_rule_2_1_19
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - httpd
+    - nginx
+    - webserver
+    - rule_2.1.19
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.19 | PATCH | Ensure web server services are not in use | Remove httpd server"
+      when:
+        - not ubtu26cis_apache2_server
+        - not ubtu26cis_apache2_mask
+        - "'apache2' in ansible_facts['packages']"
+      ansible.builtin.package:
+        name: apache2
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.19 | PATCH | Ensure web server services are not in use | Remove nginx server"
+      when:
+        - not ubtu26cis_nginx_server
+        - not ubtu26cis_nginx_mask
+        - "'nginx' in ansible_facts['packages']"
+      ansible.builtin.package:
+        name: nginx
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.19 | PATCH | Ensure web server services are not in use | Mask httpd service"
+      when:
+        - not ubtu26cis_apache2_server
+        - ubtu26cis_apache2_mask
+        - "'apache2' in ansible_facts['packages']"
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: "{{ ('apache2' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('apache2' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+      loop:
+        - apache2.service
+        - apache2.socket
+      loop_control:
+        label: "{{ item }}"
+
+    - name: "2.1.19 | PATCH | Ensure web server services are not in use | Mask nginx service"
+      when:
+        - not ubtu26cis_nginx_server
+        - ubtu26cis_nginx_mask
+        - "'nginx' in ansible_facts['packages']"
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: nginx.service
+        enabled: "{{ ('nginx' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('nginx' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.20 | PATCH | Ensure xinetd services are not in use"
+  when: ubtu26cis_rule_2_1_20
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - xinetd
+    - rule_2.1.20
+    - NIST800-53R5_CM-7
+  block:
+    - name: "2.1.20 | PATCH | Ensure xinetd services are not in use | Remove package"
+      when:
+        - "'xinetd' in ansible_facts['packages']"
+        - not ubtu26cis_xinetd_server
+        - not ubtu26cis_xinetd_mask
+      ansible.builtin.package:
+        name: xinetd
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "2.1.20 | PATCH | Ensure xinetd services are not in use | Mask service"
+      when:
+        - not ubtu26cis_xinetd_server
+        - ubtu26cis_xinetd_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: xinetd.service
+        enabled: "{{ ('xinetd' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('xinetd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true
+
+- name: "2.1.21 | PATCH | Ensure X window server services are not in use"
+  when:
+    - not ubtu26cis_xwindow_server
+    - "'xserver-common' in ansible_facts['packages']"
+    - ubtu26cis_rule_2_1_21
+  tags:
+    - level2-server
+    - patch
+    - xwindow
+    - rule_2.1.21
+    - NIST800-53R5_CM-11
+  ansible.builtin.package:
+    name: xserver-common
+    state: absent
+    purge: "{{ ubtu26cis_purge_apt }}"
+    lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+- name: "2.1.22 | PATCH | Ensure mail transfer agents are configured for local-only mode"
+  when:
+    - not ubtu26cis_is_mail_server
+    - ubtu26cis_rule_2_1_22
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - postfix
+    - rule_2.1.22
+    - NIST800-53R5_CM-7
+  vars:
+    warn_control_id: '2.1.22'
+  block:
+    - name: "2.1.22 | PATCH | Ensure mail transfer agents are configured for local-only mode | Make changes if exim4 installed"
+      when: "'exim4' in ansible_facts['packages']"
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/update-exim4.conf.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^dc_eximconfig_configtype', line: "dc_eximconfig_configtype='local'" }
+        - { regexp: '^dc_local_interfaces', line: "dc_local_interfaces='127.0.0.1 ; ::1'" }
+        - { regexp: '^dc_readhost', line: "dc_readhost=''" }
+        - { regexp: '^dc_relay_domains', line: "dc_relay_domains=''" }
+        - { regexp: '^dc_minimaldns', line: "dc_minimaldns='false'" }
+        - { regexp: '^dc_relay_nets', line: "dc_relay_nets=''" }
+        - { regexp: '^dc_smarthost', line: "dc_smarthost=''" }
+        - { regexp: '^dc_use_split_config', line: "dc_use_split_config='false'" }
+        - { regexp: '^dc_hide_mailname', line: "dc_hide_mailname=''" }
+        - { regexp: '^dc_mailname_in_oh', line: "dc_mailname_in_oh='true'" }
+        - { regexp: '^dc_localdelivery', line: "dc_localdelivery='mail_spool'" }
+      loop_control:
+        label: "{{ item }}"
+      notify: Restart exim4
+
+    - name: "2.1.22 | PATCH | Ensure mail transfer agents are configured for local-only mode | Make changes if postfix is installed"
+      when: "'postfix' in ansible_facts['packages']"
+      notify: Restart postfix
+      ansible.builtin.lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^(#)?inet_interfaces\s*=(?!\s*loopback-only\s*).*'
+        line: 'inet_interfaces = loopback-only'
+
+    - name: "2.1.22 | WARN | Ensure mail transfer agents are configured for local-only mode | Message out other main agents"
+      when:
+        - "'exim4' not in ansible_facts['packages']"
+        - "'postfix' not in ansible_facts['packages']"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! You are not using either exim4 or postfix, please ensure mail services set for local only mode"
+          - "Please review your vendors documentation to configure local-only mode"
+
+    - name: "2.1.22 | WARN | Ensure mail transfer agents are configured for local-only mode | warn_count"
+      when:
+        - "'exim4' not in ansible_facts['packages']"
+        - "'postfix' not in ansible_facts['packages']"
+      ansible.builtin.import_tasks:
+        file: warning_facts.yml
+
+- name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface"
+  when: ubtu26cis_rule_2_1_23
+  tags:
+    - level1-server
+    - level1-workstation
+    - audit
+    - services
+    - rule_2.1.23
+    - NIST800-53R5_CM-7
+  vars:
+    warn_control_id: '2.1.23'
+  block:
+    - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface | Get list of services"
+      ansible.builtin.command: systemctl list-units --type=service  # noqa command-instead-of-module
+      changed_when: false
+      failed_when: discovered_listening_services.rc not in [ 0, 1 ]
+      check_mode: false
+      register: discovered_listening_services
+
+    - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface | Display list of services"
+      ansible.builtin.debug:
+        msg:
+          - "Warning!! Below are the list of services, both active and inactive"
+          - "Please review to make sure all are essential"
+          - "{{ discovered_listening_services.stdout_lines }}"
+
+    - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface | Warn Count"
+      ansible.builtin.import_tasks:
+        file: warning_facts.yml

@@ -1,0 +1,12 @@
+{{ file_managed_by_ansible }}
+
+[Journal]
+{% if ubtu26cis_rule_6_1_1_1_7 %}
+# Set compress CIS rule 6_1_1_1_7
+Compress=yes
+{% endif %}
+
+{% if ubtu26cis_rule_6_1_1_1_6 %}
+# Set persistent storage CIS rule 6_1_1_1_6
+Storage=persistent
+{% endif %}

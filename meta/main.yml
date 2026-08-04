@@ -1,0 +1,28 @@
+---
+
+galaxy_info:
+  author: "Ansible-Lockdown Team"
+  description: "Apply the Ubuntu 26 CIS benchmarks"
+  company: "MindPoint Group - A Tyto Athene Company"
+  license: MIT
+  namespace: mindpointgroup
+  role_name: ubuntu26_cis
+  min_ansible_version: 2.16.1
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - system
+    - security
+    - cis
+    - hardening
+    - benchmark
+    - compliance
+    - complianceascode
+    - ubuntu26
+collections:
+  - community.general
+  - community.crypto
+  - ansible.posix
+dependencies: []

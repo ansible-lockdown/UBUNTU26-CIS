@@ -1,0 +1,5 @@
+{{ file_managed_by_ansible }}
+
+{% for pool in ubtu26cis_time_pool %}
+pool {{ pool.name }} {{ pool.options }}
+{% endfor %}

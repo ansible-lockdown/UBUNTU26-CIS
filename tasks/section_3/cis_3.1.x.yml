@@ -1,0 +1,145 @@
+---
+
+- name: "3.1.1 | PATCH | Ensure IPv6 status is identified"
+  when:
+    - ubtu26cis_rule_3_1_1
+    - not ubtu26cis_ipv6_required
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_3.1.1
+    - NIST800-53R5_CM-7
+    - ipv6
+  block:
+    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Replace ipv6.disable if it exists"
+      when: ubtu26cis_ipv6_disable == 'grub'
+      ansible.builtin.replace:
+        path: /etc/default/grub
+        regexp: '^(GRUB_CMDLINE_LINUX=.*)\bipv6\.disable=\d\b(.*$)'
+        replace: '\1ipv6.disable=1\2'
+      register: discovered_ipv6disable_replaced
+      notify: Grub update
+
+    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Check grub cmdline linux"
+      ansible.builtin.shell: |
+        set -o pipefail
+        grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: discovered_ipv6_grub_cmdline_settings.rc not in [0, 1]
+      check_mode: false
+      register: discovered_ipv6_grub_cmdline_settings
+
+    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Insert ipv6.disable if it doesn't exist"
+      when:
+        - ubtu26cis_ipv6_disable == 'grub'
+        - discovered_ipv6disable_replaced is not changed
+        - "'ipv6.disable' not in discovered_ipv6_grub_cmdline_settings.stdout"
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^(GRUB_CMDLINE_LINUX=".*)"$'
+        line: '\1 ipv6.disable=1"'
+        backrefs: true
+      notify: Grub update
+
+    - name: "3.1.1 | PATCH | Ensure IPv6 status is identified | Remove net.ipv6.conf.all.disable_ipv6"
+      when: ubtu26cis_ipv6_disable == 'sysctl'
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/{{ item }}"
+        owner: root
+        group: root
+        mode: 'g-wx,o-rwx'
+      notify: Flush ipv6 route table
+      loop:
+        - etc/sysctl.d/60-disable_ipv6.conf
+      loop_control:
+        label: "{{ item }}"
+
+- name: "3.1.2 | PATCH | Ensure wireless interfaces are not available"
+  when:
+    - ubtu26cis_rule_3_1_2
+    - not system_is_container
+  tags:
+    - level1-server
+    - patch
+    - rule_3.1.2
+    - NIST800-53R5_CM-7
+    - wireless
+  block:
+    - name: "3.1.2 | AUDIT | Ensure wireless interfaces are not available | Discover is wireless adapter on system"
+      ansible.builtin.command: find /sys/class/net/*/ -type d -name wireless
+      changed_when: false
+      failed_when: prelim_wireless_adapters.rc not in [ 0, 1 ]
+      check_mode: false
+      register: prelim_wireless_adapters
+
+    - name: "3.1.2 | AUDIT | Ensure wireless interfaces are not available | If wireless adapter present capture module"
+      when: prelim_wireless_adapters.rc == 0
+      ansible.builtin.shell: |
+        set -o pipefail
+        for driverdir in $(find /sys/class/net/*/ -type d -name wireless | xargs -0 dirname);
+          do basename "$(readlink -f "$driverdir"/device/driver/module)";
+        done | sort -u
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: discovered_wireless_modules.rc not in [ 0, 1 ]
+      check_mode: false
+      register: discovered_wireless_modules
+
+    - name: "3.1.2 | PATCH | Ensure wireless interfaces are not available | if wireless adapter exist"
+      when: discovered_wireless_modules.stdout is defined
+      block:
+        - name: "3.1.2 | PATCH | Ensure wireless interfaces are not available | Create modprobe.d file"
+          ansible.builtin.lineinfile:
+            path: /etc/modprobe.d/{{ item }}.conf
+            regexp: '^(#)?install true(\\s|$)'
+            line: install {{ item }} true
+            create: true
+            mode: 'go-wx'
+          loop: "{{ discovered_wireless_modules.stdout_lines }}"
+
+        - name: "3.1.2 | PATCH | Ensure wireless interfaces are not available | blacklist"
+          ansible.builtin.lineinfile:
+            path: /etc/modprobe.d/blacklist.conf
+            regexp: "^(#)?blacklist {{ item }}(\\s|$)"
+            line: "blacklist {{ item }}"
+            create: true
+            mode: 'go-rwx'
+          loop: "{{ discovered_wireless_modules.stdout_lines }}"
+          loop_control:
+            label: "{{ item }}"
+
+- name: "3.1.3 | PATCH | Ensure bluetooth services are not in use"
+  when: ubtu26cis_rule_3_1_3
+  tags:
+    - level1-server
+    - level2-workstation
+    - patch
+    - bluetooth
+    - rule_3.1.3
+    - NIST800-53R5_CM-7
+  block:
+    - name: "3.1.3 | PATCH | Ensure bluetooth services are not in use | pkg"
+      when:
+        - not ubtu26cis_bluetooth_service
+        - not ubtu26cis_bluetooth_mask
+      ansible.builtin.package:
+        name: bluez
+        state: absent
+        purge: "{{ ubtu26cis_purge_apt }}"
+        lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
+
+    - name: "3.1.3 | PATCH | Ensure bluetooth services are not in use | mask"
+      when:
+        - not ubtu26cis_bluetooth_service
+        - ubtu26cis_bluetooth_mask
+      notify: Systemd_daemon_reload
+      ansible.builtin.systemd:
+        name: bluetooth.service
+        enabled: "{{ ('bluez' in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ ('bluez' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        masked: true

@@ -1,0 +1,33 @@
+---
+
+# This is a playbook to test the tasks.
+- name: Converge
+  hosts: all
+  gather_facts: true
+
+  vars:
+    role_name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+    ansible_user: root
+    system_is_container: true
+    ubtu26cis_skip_for_test: true
+    setup_audit: true
+    run_audit: true
+    # Note: audit_content/audit_conf_source cannot be set here. prelim.yml does an
+    # include_vars of vars/audit.yml, which outranks play vars, so they are passed
+    # as extra vars via provisioner.ansible_args in molecule.yml instead.
+    ubtu26cis_set_boot_pass: false
+    ubtu26cis_bootloader_password_hash: "grub.pbkdf2.sha512.10000.DEADBEEF.DEADBEEF"  # pragma: allowlist secret
+    # Per-control container exclusions belong in vars/is_container.yml, NOT here,
+    # so that the generated goss vars disable the same controls and the audit does
+    # not report failures for controls the role never attempts. See
+    # knowledge/conventions/cis-molecule.md.
+
+  pre_tasks:
+    - name: Set root password for GRUB user check
+      ansible.builtin.shell: echo 'root:MoleculeTest123!' | chpasswd
+      changed_when: true
+
+  tasks:
+    - name: "Include tasks"
+      ansible.builtin.include_role:
+        name: "{{ role_name }}"
