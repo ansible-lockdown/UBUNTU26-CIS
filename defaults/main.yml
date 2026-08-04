@@ -891,7 +891,11 @@ ubtu26cis_bluetooth_mask: false
 
 # This variable contains the path to the file in which, sysctl saves its configurations.
 # Its default value is `/etc/sysctl.conf`.
-ubtu26cis_sysctl_network_conf: /etc/sysctl.conf
+# Ubuntu 26.04 no longer ships the /etc/sysctl.d/99-sysctl.conf -> /etc/sysctl.conf
+# symlink, so systemd-sysctl does NOT apply /etc/sysctl.conf at boot and any
+# network parameters written there are lost on reboot. Keep this under
+# /etc/sysctl.d/ so the settings persist, as the kernel parameters already do.
+ubtu26cis_sysctl_network_conf: /etc/sysctl.d/97_cis_network.conf
 # This variable governs whether specific CIS rules
 # concerned with acceptance and routing of packages
 # are skipped.
@@ -902,6 +906,36 @@ ubtu26cis_is_router: false
 ##
 # Section 4 covers UFW only - this benchmark does not include nftables or
 # iptables as alternative firewall profiles.
+
+# Outbound connections permitted before control 4.1.4 sets the outgoing default
+# to deny.
+#
+# WHICH PORTS TO ALLOW IS A SITE DECISION - review and change these to match your
+# egress policy. The defaults below are the minimum required for a system to
+# remain operable after hardening:
+#   53/tcp + 53/udp  DNS resolution - without this nothing else resolves
+#   80/tcp           HTTP  - package repositories
+#   123/udp          NTP   - time synchronisation (section 2.3)
+#   443/tcp          HTTPS - package repositories once 1.2.1.10/11 enforce https
+#   22/tcp           SSH   - outbound administration and git-based audit content
+#
+# Removing an entry will break the corresponding function. Set the variable to
+# the string "all" to permit all outbound traffic, or to an empty list to allow
+# none - note that an empty list leaves the host unable to resolve DNS or fetch
+# packages, which will fail any later task that installs software.
+ubtu26cis_ufw_allow_out_ports:
+  - port: 53
+    proto: tcp
+  - port: 53
+    proto: udp
+  - port: 80
+    proto: tcp
+  - port: 123
+    proto: udp
+  - port: 443
+    proto: tcp
+  - port: 22
+    proto: tcp
 
 # This variable is used in a preliminary task that forces the UFW firewall to use /etc/sysctl.conf
 # settings. If set to "true" the task will get done in the prelim section of the role.
