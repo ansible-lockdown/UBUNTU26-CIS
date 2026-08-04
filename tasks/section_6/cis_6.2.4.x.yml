@@ -160,6 +160,31 @@
   loop_control:
     label: "{{ item.path }}"
 
+# audit_bins is the canonical list of audit tools, but not every distribution
+# ships all of them - Ubuntu 26.04 has no autrace. Filter to the tools actually
+# present so the permission tasks do not fail on an absent binary.
+- name: "6.2.4.8/9/10 | AUDIT | Discover which audit tools are present"
+  when: >
+    ubtu26cis_rule_6_2_4_8 or
+    ubtu26cis_rule_6_2_4_9 or
+    ubtu26cis_rule_6_2_4_10
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - auditd
+    - rule_6.2.4.8
+    - rule_6.2.4.9
+    - rule_6.2.4.10
+    - NIST800-53R5_AU-3
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ audit_bins }}"
+  loop_control:
+    label: "{{ item }}"
+  check_mode: false
+  register: discovered_audit_bins
+
 - name: "6.2.4.8 | PATCH | Ensure audit tools mode is configured"
   when: ubtu26cis_rule_6_2_4_8
   tags:
@@ -172,7 +197,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     mode: 'u+x,g-w,o-rwx'
-  loop: "{{ audit_bins }}"
+  loop: "{{ discovered_audit_bins.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
   loop_control:
     label: "{{ item }}"
 
@@ -188,7 +213,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     owner: root
-  loop: "{{ audit_bins }}"
+  loop: "{{ discovered_audit_bins.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
   loop_control:
     label: "{{ item }}"
 
@@ -204,6 +229,6 @@
   ansible.builtin.file:
     path: "{{ item }}"
     group: root
-  loop: "{{ audit_bins }}"
+  loop: "{{ discovered_audit_bins.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
   loop_control:
     label: "{{ item }}"
