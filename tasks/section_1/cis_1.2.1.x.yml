@@ -12,10 +12,18 @@
   vars:
     warn_control_id: '1.2.1.1'
   block:
+    # Build the file list explicitly - an unmatched glob makes grep exit 2, which
+    # is indistinguishable from a real error. nullglob drops globs that match
+    # nothing, and a system may legitimately have no *.list or *.sources files.
     - name: "1.2.1.1 | AUDIT | Ensure the source.list and .source files use the Signed-By option | Get source files"
       ansible.builtin.shell: |
         set -o pipefail
-        grep -PsL -- '^\h*Signed-By\h*:\h*\S+' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null
+        shopt -s nullglob
+        apt_src_files=()
+        [ -f /etc/apt/sources.list ] && apt_src_files+=(/etc/apt/sources.list)
+        apt_src_files+=(/etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources)
+        [ -z "${apt_src_files[*]}" ] && exit 0
+        grep -PsL -- '^\h*Signed-By\h*:\h*\S+' "${apt_src_files[@]}"
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
       changed_when: false
