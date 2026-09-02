@@ -121,7 +121,7 @@
     - sshd
   block:
 
-    - name: "5.1.5 | PATCH | Ensure sshd access is configured |Ensure /run/sshd exists for sshd -t validation"
+    - name: "5.1.5 | PATCH | Ensure sshd access is configured | Ensure /run/sshd exists for sshd -t validation"
       ansible.builtin.file:
         path: /run/sshd
         state: directory
@@ -165,7 +165,7 @@
         validate: 'sshd -t -f %s'
       notify: Restart sshd
 
-- name: "5.1.6| PATCH | Ensure sshd Banner is configured"
+- name: "5.1.6 | PATCH | Ensure sshd Banner is configured"
   when: ubtu26cis_rule_5_1_6
   tags:
     - level1-server

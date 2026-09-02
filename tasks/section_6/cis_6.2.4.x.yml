@@ -1,6 +1,6 @@
 ---
 
-- name: "6.2.4.1/2/3/4| AUDIT | Capture logfile location"
+- name: "6.2.4.1/2/3/4 | AUDIT | Capture logfile location"
   when:
     - ubtu26cis_rule_6_2_4_1 or
       ubtu26cis_rule_6_2_4_2 or
