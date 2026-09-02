@@ -8,6 +8,32 @@
     lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
   changed_when: not ubtu26cis_ignore_apt_update_changed_when
 
+- name: "PRELIM | AUDIT | Register if snap being used"
+  when: ubtu26cis_rule_1_1_1_7
+  tags: always
+  ansible.builtin.shell: |
+    set -o pipefail
+    lsblk | grep -wc "/snap"
+  args:
+    executable: "{{ ubtu26cis_shell_executable }}"
+  changed_when: false
+  failed_when: prelim_snap_pkg_mgr.rc not in [ 0, 1 ]
+  check_mode: false
+  register: prelim_snap_pkg_mgr
+
+- name: "PRELIM | AUDIT | Register if squashfs is built into the kernel"
+  when: ubtu26cis_rule_1_1_1_7
+  tags: always
+  ansible.builtin.shell: |
+    set -o pipefail
+    cat /lib/modules/$(uname -r)/modules.builtin | grep "squashfs"
+  args:
+    executable: "{{ ubtu26cis_shell_executable }}"
+  changed_when: false
+  failed_when: prelim_squashfs_builtin.rc not in [ 0, 1 ]
+  check_mode: false
+  register: prelim_squashfs_builtin
+
 - name: Include audit specific variables
   when: run_audit or audit_only or setup_audit
   tags:
