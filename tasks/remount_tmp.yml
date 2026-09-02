@@ -1,24 +1,27 @@
 ---
 
-- name: "Configure and remount /tmp with appropriate options | not systemd tmp.mount"
+- name: "Add filesystem options for /tmp"
   when: not ubtu26cis_tmp_svc
   vars:
     mount_point: '/tmp'
-  block:
-    - name: "Add filesystem options for /tmp"
-      ansible.posix.mount:
-        path: "{{ mount_point }}"
-        src: "{{ prelim_mount_point_fs_and_options[mount_point]['src'] }}"
-        state: present
-        fstype: "{{ prelim_mount_point_fs_and_options[mount_point]['fs_type'] }}"
-        opts: "{{ prelim_mount_point_fs_and_options[mount_point]['options'] | unique | join(',') }}"
+  ansible.posix.mount:
+    path: "{{ mount_point }}"
+    src: "{{ prelim_mount_point_fs_and_options[mount_point]['src'] }}"
+    state: present
+    fstype: "{{ prelim_mount_point_fs_and_options[mount_point]['fs_type'] }}"
+    opts: "{{ prelim_mount_point_fs_and_options[mount_point]['options'] | unique | join(',') }}"
+  listen: "Remount /tmp"
 
-    - name: "Remounting /tmp"
-      ansible.posix.mount:
-        path: "{{ mount_point }}"
-        state: remounted
-      failed_when: false
-      register: discovered_remount_tmp
+- name: "Remounting /tmp"
+  when: not ubtu26cis_tmp_svc
+  vars:
+    mount_point: '/tmp'
+  ansible.posix.mount:
+    path: "{{ mount_point }}"
+    state: remounted
+  failed_when: false
+  register: discovered_remount_tmp
+  listen: "Remount /tmp"
 
 - name: "Reloading /tmp systemd service"
   when: ubtu26cis_tmp_svc
