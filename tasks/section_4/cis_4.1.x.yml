@@ -125,14 +125,41 @@
     direction: routed
   notify: Reload ufw
 
+- name: "OPTIONAL | AUDIT | Check for ufw config files"
+  tags: always
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /etc/default/ufw
+    - /etc/ufw/sysctl.conf
+  register: discovered_ufw_conf_files
+
 - name: "OPTIONAL | PATCH | UFW firewall force to use /etc/sysctl.conf settings"
   when:
     - ubtu26cis_ufw_use_sysctl
-    - "'ufw' in ansible_facts['packages']"
+    - discovered_ufw_conf_files.results[0].stat.exists | default(false)
   tags: always
   ansible.builtin.lineinfile:
     path: /etc/default/ufw
     regexp: ^IPT_SYSCTL=.*
     line: IPT_SYSCTL=/etc/sysctl.conf
     mode: 'u-x,go-wx'
-  notify: Reload ufw
+  notify:
+    - Reload ufw
+    - Reapply sysctl settings
+
+- name: "OPTIONAL | PATCH | Ensure ufw does not override log_martians"
+  when:
+    - discovered_ufw_conf_files.results[1].stat.exists | default(false)
+    - item.rule
+  tags: always
+  ansible.builtin.replace:
+    path: /etc/ufw/sysctl.conf
+    regexp: '^\s*#?\s*net/ipv4/conf/{{ item.scope }}/log_martians\s*=.*$'
+    replace: 'net/ipv4/conf/{{ item.scope }}/log_martians=1'
+  loop:
+    - {scope: 'all', rule: "{{ ubtu26cis_rule_3_3_1_16 }}"}
+    - {scope: 'default', rule: "{{ ubtu26cis_rule_3_3_1_17 }}"}
+  notify:
+    - Reload ufw
+    - Reapply sysctl settings
