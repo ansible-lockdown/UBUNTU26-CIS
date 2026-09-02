@@ -393,7 +393,7 @@
   ansible.builtin.set_fact:
     update_audit_template: true
 
-- name: "6.2.3.32 | PATCH | Ensure kernel init_module and finit_module loading unloading and modification is collected"
+- name: '6.2.3.32 | PATCH | Ensure kernel "init_module" and "finit_module" loading unloading and modification is collected'
   when: ubtu26cis_rule_6_2_3_32
   tags:
     - level2-server
@@ -406,7 +406,7 @@
   ansible.builtin.set_fact:
     update_audit_template: true
 
-- name: "6.2.3.33 | PATCH | Ensure kernel delete_module loading unloading and modification is collected"
+- name: '6.2.3.33 | PATCH | Ensure kernel "delete_module" loading unloading and modification is collected'
   when: ubtu26cis_rule_6_2_3_33
   tags:
     - level2-server

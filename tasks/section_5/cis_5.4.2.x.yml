@@ -157,7 +157,7 @@
   ansible.builtin.debug:
     msg: "This is set as an assert in tasks/main"
 
-- name: "5.4.2.5 | PATCH | Ensure root PATH Integrity"
+- name: "5.4.2.5 | PATCH | Ensure root path integrity"
   when: ubtu26cis_rule_5_4_2_5
   tags:
     - level1-server
@@ -171,7 +171,7 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
   block:
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Get root paths"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Get root paths"
       ansible.builtin.shell: |
         set -o pipefail
         sudo -Hiu root env | grep '^PATH' | cut -d= -f2
@@ -181,7 +181,7 @@
       check_mode: false
       register: discovered_root_paths
 
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Get root paths"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Get root paths"
       when: discovered_root_paths is defined
       ansible.builtin.shell: |
         set -o pipefail
@@ -192,12 +192,12 @@
       check_mode: false
       register: discovered_root_paths_split
 
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Set fact"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Set fact"
       when: discovered_root_paths is defined
       ansible.builtin.set_fact:
         root_paths: "{{ discovered_root_paths.stdout }}"
 
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Check for empty dirs"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Check for empty dirs"
       when: discovered_root_paths is defined
       ansible.builtin.shell: |
         set -o pipefail
@@ -209,7 +209,7 @@
       check_mode: false
       register: discovered_root_path_empty_dir
 
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Check for trailing ':'"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Check for trailing ':'"
       when: discovered_root_paths is defined
       ansible.builtin.shell: |
         set -o pipefail
@@ -221,17 +221,17 @@
       check_mode: false
       register: discovered_root_path_trailing_colon
 
-    - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Check for owner and permissions"
+    - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Check for owner and permissions"
       when: discovered_root_paths is defined
       block:
-        - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Check for owner and permissions"
+        - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Check for owner and permissions"
           ansible.builtin.stat:
             path: "{{ item }}"
           check_mode: false
           register: discovered_root_path_perms
           loop: "{{ discovered_root_paths_split.stdout_lines }}"
 
-        - name: "5.4.2.5 | AUDIT | Ensure root PATH Integrity | Set permissions"
+        - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Set permissions"
           when:
             - item.stat.exists
             - item.stat.isdir

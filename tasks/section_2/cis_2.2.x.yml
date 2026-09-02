@@ -1,6 +1,6 @@
 ---
 
-- name: "2.2.1 | PATCH | Ensure NIS Client is not installed"
+- name: "2.2.1 | PATCH | Ensure nis client is not installed"
   when:
     - ubtu26cis_rule_2_2_1
     - not ubtu26cis_nis_server
