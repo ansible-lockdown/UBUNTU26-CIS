@@ -17,17 +17,17 @@
 - name: "POST | AUDITD | Ensure use of privileged commands is collected"
   ansible.builtin.shell: |
     set -o pipefail
-    for i in $(df | grep '^/dev' | grep -Ev '{{ exclude_options }}' | awk '{ print $NF }');
+    for i in $(df | grep '^/dev' | grep -Ev '(asdfmnop{% if ubtu26cis_priv_command_excluded_mounts | length > 0 %}|{{ exclude_options }}{% endif %})' | awk '{ print $NF }');
     do find $i -xdev -type f -perm /6000 2>/dev/null;
     done
   args:
     executable: "{{ ubtu26cis_shell_executable }}"
   changed_when: false
-  failed_when: discovered_privileged_commands.rc not in [0, 1]
+  failed_when: discovered_privilege_processes.rc not in [0, 1]
   check_mode: false
-  register: discovered_privileged_commands
+  register: discovered_privilege_processes
   vars:
-    exclude_options: "(asdfmnop|{{ ubtu26cis_priv_command_excluded_mounts | join('|') }})"
+    exclude_options: "{{ ubtu26cis_priv_command_excluded_mounts | join('|') }}"
 
 - name: "POST | AUDIT | Check if auditd is immutable before changes"
   when: "'auditd' in ansible_facts['packages']"
