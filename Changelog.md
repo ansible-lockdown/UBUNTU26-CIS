@@ -1,5 +1,19 @@
 # Initial Ubuntu26 CIS V1.0.0 August 2026
 
+## September 2026 - three-way alignment to v1.0.0
+
+Remediation task titles, audit goss titles and the v1.0.0 benchmark JSON now agree on
+all 350 controls.
+
+- 2.2.1 "Ensure NIS Client is not installed" -> "Ensure nis client is not installed"
+- 5.4.2.5 "Ensure root PATH Integrity" -> "Ensure root path integrity"
+- 6.2.3.32 and 6.2.3.33 restored the benchmark's quoting around the syscall names
+  ("init_module", "finit_module", "delete_module"); the task names are single-quoted
+  YAML scalars so the inner double quotes are literal
+- separator spacing normalised to " | " in 4 task names (5.1.5, 5.1.6, 5.4.1.5,
+  6.2.4.1/2/3/4) - a missing space made the title parsers read the suffix as part of
+  the control title
+
 ## September 2026 - silent no-op fixes
 
 - 6.2.3.x auditd: the privileged command exclude rendered `(asdfmnop|)` when
