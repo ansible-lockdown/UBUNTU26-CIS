@@ -268,7 +268,9 @@
       notify: Update dconf
 
 - name: "1.7.6 | PATCH | Ensure XDMCP is not enabled"
-  when: ubtu26cis_rule_1_7_6
+  when:
+    - ubtu26cis_rule_1_7_6
+    - ubtu26cis_desktop_required
   tags:
     - level1-server
     - level1-workstation
