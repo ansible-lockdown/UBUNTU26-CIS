@@ -1,5 +1,24 @@
 # Initial Ubuntu26 CIS V1.0.0 August 2026
 
+## September 2026 - silent no-op fixes
+
+- 6.2.3.x auditd: the privileged command exclude rendered `(asdfmnop|)` when
+  `ubtu26cis_priv_command_excluded_mounts` is empty (the default), an empty alternative
+  that GNU grep matches against every line, so `grep -Ev` discarded every mount and no
+  privileged commands were found. The alternation is now gated on a non-empty list
+- 6.2.3.x auditd: the task registered `discovered_privileged_commands` but
+  `templates/audit/99_auditd.rules.j2` reads `discovered_privilege_processes` behind an
+  `is defined` guard, so no `-k privileged` rules were ever written. Register renamed
+- 7.1.13 used `find ... -perm \( -02000 or -04000 \)`; find takes `\(` as the mode
+  argument and `or` is not a find operator, so with `failed_when: false` the SUID/SGID
+  review reported clean on every host. Now `\( -perm -02000 -o -perm -04000 \)`
+- 3.2.1-3.2.6 modprobe tasks looped two lines against one fixed regexp, so the second
+  item replaced what the first wrote and only the blacklist line survived. Each item now
+  carries its own regexp, and the regexps moved to double quotes - in a single-quoted
+  YAML scalar `\\s` stays literal and can never match
+- 3.1.2 wrote `install <mod> true` with a regexp naming "true" rather than the module;
+  now `/bin/true` and the module name
+
 ## Alignment to CIS Ubuntu Linux 26.04 LTS Benchmark v1.0.0 - August 2026
 
 Full control alignment against v1.0.0 (350 controls). All rule IDs, task names and
