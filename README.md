@@ -65,6 +65,12 @@
 
 On our [Discord Server](https://www.lockdownenterprise.com/discord) to ask questions, discuss features, or just chat with other Ansible-Lockdown users
 
+### Contributing
+
+Bug reports and feature requests are welcome from everyone, please raise an issue.
+
+Pull requests are accepted from approved contributors only. To be onboarded, join the [Discord Server](https://www.lockdownenterprise.com/discord) and request contributor access. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full process.
+
 ---
 
 ## Caution(s)
@@ -209,7 +215,7 @@ Below is an example of the tag section from a control within this role. Using th
 ```
 
 
-## Community Contribution 🧑‍🤝‍🧑
+## Community Contribution
 
 We encourage you (the community) to contribute to this role. Please read the rules below.
 
@@ -218,7 +224,7 @@ We encourage you (the community) to contribute to this role. Please read the rul
 - Pull Requests into devel will confirm your commits have a GPG signature, Signed-off-by, and a functional test before being approved
 - Once your changes are merged and a more detailed review is complete, an authorized member will merge your changes into the main branch for a new release
 
-## Pipeline Testing 🔄
+## Pipeline Testing
 
 uses:
 
@@ -231,7 +237,7 @@ uses:
 ## Known Issues
 
 
-## Local Testing 💻
+## Local Testing
 
 ### example
 
@@ -251,7 +257,7 @@ local testing uses:
 - molecule-azure 0.5.0
 
 
-## Credits and Thanks 🙏
+## Credits and Thanks
 
 Massive thanks to the fantastic community and all its members.
 
