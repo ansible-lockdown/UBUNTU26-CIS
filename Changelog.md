@@ -1,5 +1,16 @@
 # Initial Ubuntu26 CIS V1.0.0 August 2026
 
+## September 2026 - QA pass fixes
+
+- latest branch
+  - 2.2.1, 2.3.2.2, 2.3.3.3: added the missing patch tag, --tags patch skipped them
+  - 5.4.1.2, 6.1.1.1.1/4/5, 6.1.2.4/5/7 and the journald conf.d helper: added patch beside audit
+  - 5.1.5: goss vars now emit nothing when the sshd access list is empty
+  - 5.3.2.1: pam_unix.j2 renamed to unix.j2 to match the src the task resolves
+  - auditd exception template: prefixed allow_auditd_uid_user_exclusions
+  - remount_tmp: /tmp mount-busy tasks flattened, each carries listen
+  - unix.j2: kept the newline after the Password stanza, it was joining Password-Initial
+
 ## September 2026 - audit variables moved to defaults
 
 - latest branch
