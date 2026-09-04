@@ -61,6 +61,7 @@
     - level1-workstation
     - manual
     - audit
+    - patch
     - rule_6.1.2.4
     - NIST800-53R5_AU-2
     - NIST800-53R5_AU-7
@@ -134,6 +135,7 @@
     - level1-workstation
     - automated
     - audit
+    - patch
     - rule_6.1.2.5
     - NIST800-53R5_AU-6
     - rsyslog
@@ -192,6 +194,7 @@
     - level1-workstation
     - manual
     - audit
+    - patch
     - logrotate
     - rule_6.1.2.7
     - NIST800-53R5_AU-8

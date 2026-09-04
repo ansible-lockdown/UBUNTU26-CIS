@@ -67,6 +67,7 @@
     - level2-server
     - level2-workstation
     - audit
+    - patch
     - rule_5.4.1.2
     - NIST800-53R5_NA
     - user
