@@ -669,13 +669,13 @@ ubtu26cis_system_is_log_server: {{ ubtu26cis_system_is_log_server }}
 
 # Note the following to understand precedence and layout
 
-ubtu26cis_sshd_allow_users: AllowUsers {% if ubtu26cis_sshd_allow_users | length > 0 %}{{ ubtu26cis_sshd_allow_users }}{% endif %}
+ubtu26cis_sshd_allow_users: {% if ubtu26cis_sshd_allow_users | length > 0 %}AllowUsers {{ ubtu26cis_sshd_allow_users }}{% endif %}
 
-ubtu26cis_sshd_allow_groups: AllowGroups {% if ubtu26cis_sshd_allow_groups | length > 0 %}{{ ubtu26cis_sshd_allow_groups }}{% endif %}
+ubtu26cis_sshd_allow_groups: {% if ubtu26cis_sshd_allow_groups | length > 0 %}AllowGroups {{ ubtu26cis_sshd_allow_groups }}{% endif %}
 
-ubtu26cis_sshd_deny_users:  DenyUsers {% if ubtu26cis_sshd_deny_users | length > 0 %}{{ ubtu26cis_sshd_deny_users }}{% endif %}
+ubtu26cis_sshd_deny_users:  {% if ubtu26cis_sshd_deny_users | length > 0 %}DenyUsers {{ ubtu26cis_sshd_deny_users }}{% endif %}
 
-ubtu26cis_sshd_deny_groups: DenyGroups {% if ubtu26cis_sshd_deny_groups | length > 0 %}{{ ubtu26cis_sshd_deny_groups }}{% endif %}
+ubtu26cis_sshd_deny_groups: {% if ubtu26cis_sshd_deny_groups | length > 0 %}DenyGroups {{ ubtu26cis_sshd_deny_groups }}{% endif %}
 
 ubtu26cis_sshd_client_alive_interval: {{ ubtu26cis_sshd_client_alive_interval }}
 ubtu26cis_sshd_client_alive_count_max: {{ ubtu26cis_sshd_client_alive_count_max }}
