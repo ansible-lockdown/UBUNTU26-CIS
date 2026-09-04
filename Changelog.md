@@ -1,5 +1,14 @@
 # Initial Ubuntu26 CIS V1.0.0 August 2026
 
+## September 2026 - audit variables moved to defaults
+
+- latest branch
+  - defaults split into defaults/main/main.yml and defaults/main/audit.yml
+  - vars/audit.yml moved to defaults/main/audit.yml, audit toggles moved in with it
+  - audit settings now overridable from inventory, group_vars, host_vars and molecule
+  - prelim include_vars of audit.yml removed, defaults/main/ auto-loads
+  - molecule sets audit_content and audit_conf_source in converge vars
+
 ## September 2026 - contributing guidelines
 
 - CONTRIBUTING.md replaced with the canonical org-wide copy. It now states that pull
