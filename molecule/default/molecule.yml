@@ -21,15 +21,6 @@ provisioner:
   name: ansible
   env:
     ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
-  # The UBUNTU26-CIS-Audit repo is not published upstream yet, so there is no
-  # benchmark_v1.0.0 tag to clone. Use the local audit content instead - this also
-  # means molecule exercises the goss tests in this working tree. These must be
-  # extra vars: prelim.yml include_vars of vars/audit.yml outranks play vars.
-  ansible_args:
-    - -e
-    - audit_content=copy
-    - -e
-    - audit_conf_source=${MOLECULE_PROJECT_DIRECTORY}/../UBUNTU26-CIS-Audit
   config_options:
     defaults:
       interpreter_python: auto_silent

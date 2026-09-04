@@ -12,9 +12,11 @@
     ubtu26cis_skip_for_test: true
     setup_audit: true
     run_audit: true
-    # Note: audit_content/audit_conf_source cannot be set here. prelim.yml does an
-    # include_vars of vars/audit.yml, which outranks play vars, so they are passed
-    # as extra vars via provisioner.ansible_args in molecule.yml instead.
+    # The UBUNTU26-CIS-Audit repo is not published upstream yet, so there is no
+    # benchmark_v1.0.0 tag to clone. Use the local audit content instead - this also
+    # means molecule exercises the goss tests in this working tree.
+    audit_content: copy
+    audit_conf_source: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../UBUNTU26-CIS-Audit"
     ubtu26cis_set_boot_pass: false
     ubtu26cis_bootloader_password_hash: "grub.pbkdf2.sha512.10000.DEADBEEF.DEADBEEF"  # pragma: allowlist secret
     # Per-control container exclusions belong in vars/is_container.yml, NOT here,
