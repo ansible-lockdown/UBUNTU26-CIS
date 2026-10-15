@@ -957,7 +957,10 @@ ubtu26cis_sshd_macs:
   - hmac-sha2-512
 # This variable is used to state the key exchange algorithms used to establish secure encryption
 # keys during the initial connection setup.
+# The first two are the post-quantum hybrid algorithms required by 5.1.14 (OpenSSH 9.9 or later).
 ubtu26cis_sshd_kex_algorithms:
+  - mlkem768x25519-sha256
+  - sntrup761x25519-sha512
   - ecdh-sha2-nistp256
   - ecdh-sha2-nistp384
   - ecdh-sha2-nistp521
@@ -965,7 +968,6 @@ ubtu26cis_sshd_kex_algorithms:
   - diffie-hellman-group16-sha512
   - diffie-hellman-group18-sha512
   - diffie-hellman-group14-sha256
-# - sntrup761x25519-sha512  # Post-quantum KEX (enable if your OpenSSH version supports it; check with: ssh -Q kex)
 
 # This variable, if specified, configures a list of USER name patterns, separated by spaces, to allow SSH
 # access for users whose user name matches one of the patterns. This is done
@@ -1274,34 +1276,30 @@ ubtu26cis_bash_umask: '027'
 ## Section 6 Control Variables
 ##
 
-## Control 6.1.1.3 - Ensure journald log file rotation is configured
+## Control 6.1.1.1.5 - Ensure journald log file rotation is configured
+# Defaults are the benchmark example values; set them to site policy. Prefix a value with # to leave it unset.
 # These variables specify how much disk space the journal may use up at most
 # Specify values in bytes or use K, M, G, T, P, E as units for the specified sizes.
 # See https://www.freedesktop.org/software/systemd/man/journald.conf.html for more information.
 # This variable determines the maximum disk space used by `journald`.
 # It defaults to 10% of the available file system.
 # Specify values in bytes or use K, M, G, T, P, E as units for the specified size.
-# ATTENTION: Uncomment the keyword `SystemMaxUse` when values are set!
-ubtu26cis_journald_systemmaxuse: "#SystemMaxUse=1G"
+ubtu26cis_journald_systemmaxuse: "SystemMaxUse=1G"
 # This variable determines disk to be kept free by `journald`.
 # Specify values in bytes or use K, M, G, T, P, E as units for the specified size.
-# ATTENTION: Uncomment the keyword `SystemKeepFree` when values are set!
-ubtu26cis_journald_systemkeepfree: "#SystemKeepFree=500M"
+ubtu26cis_journald_systemkeepfree: "SystemKeepFree=500M"
 # This variable determines the maximum disk space used by `journald`.
 # It defaults to 15% of the available file system.
 # Specify values in bytes or use K, M, G, T, P, E as units for the specified size.
-# ATTENTION: Uncomment the keyword `RuntimeMaxUse` when values are set!
-ubtu26cis_journald_runtimemaxuse: "#RuntimeMaxUse=200M"
+ubtu26cis_journald_runtimemaxuse: "RuntimeMaxUse=200M"
 # This variable determines disk to be kept free by `journald`.
 # Specify values in bytes or use K, M, G, T, P, E as units for the specified size.
-# ATTENTION: Uncomment the keyword `RuntimeKeepFree` when values are set!
-ubtu26cis_journald_runtimekeepfree: "#RuntimeKeepFree=50M"
+ubtu26cis_journald_runtimekeepfree: "RuntimeKeepFree=50M"
 # This variable specifies, the maximum time to store entries in a single journal
 # file before rotating to the next one. Set to 0 to turn off this feature.
 # The given value is interpreted as seconds, unless suffixed with the units
 # `year`, `month`, `week`, `day`, `h` or `m` to override the default time unit of seconds.
-# ATTENTION: Uncomment the keyword `MaxFileSec` when values are set!
-ubtu26cis_journald_maxfilesec: "#MaxFileSec=1month"
+ubtu26cis_journald_maxfilesec: "MaxFileSec=1month"
 
 ## Controls 6.1.1.1.x (`journald`) and 6.1.2.x (`rsyslog`)
 # This variable governs which logging system are used.

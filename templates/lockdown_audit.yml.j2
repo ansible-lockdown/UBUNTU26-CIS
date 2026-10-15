@@ -513,7 +513,7 @@ ubtu26cis_bootloader_password_hash: {{ ubtu26cis_bootloader_password_hash }}  # 
 # Noe that the banner text must not contain the below items in order to be
 # compliant with CIS: \m, \r, \s, \v or references to the OS platform
 ubtu26cis_warning_banner: |
-        Authorized uses only. All activity may be monitored and reported.
+  {{ ubtu26cis_warning_banner | trim | indent(2) }}
 
 # This variable governs, whether dynamic motd is disabled (as required by control 1.7.1)
 ubtu26cis_disable_dynamic_motd: {{ ubtu26cis_disable_dynamic_motd }}

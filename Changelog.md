@@ -41,6 +41,7 @@
 - 5.2.1 installs sudo-rs by default
 - 5.4.3.1 removes nologin lines from /etc/shells
 - 6.1.1.1.4 checks the /etc/tmpfiles.d override, vendor file left alone
+- 6.1.1.1.5 journald rotation defaults set to the benchmark example values
 - 6.1.2.2 unmasks and starts rsyslog
 - 6.1.2.4 auth logging goes to /var/log/auth.log
 - 6.2.3.18 and 6.2.3.25 rules include fchmodat2 and renameat2
@@ -81,6 +82,8 @@
 - unused ubtu26cis_skip_for_test removed
 - bridge template rule section end marker added
 - bridge passes ubtu26cis_dconf_db_name through to the audit
+- bridge passes ubtu26cis_warning_banner through to the audit
+- 5.1.13 and 5.1.14 KexAlgorithms include mlkem768x25519-sha256 and sntrup761x25519-sha512
 - 6.2.3.21 toggle moved into numeric order
 
 ## September 2026
