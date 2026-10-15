@@ -2,9 +2,11 @@
 
 # This template will set all of the auditd configurations via a handler in the role in one task instead of individually
 
+{% set audit_present_dirs = discovered_audit_optional_dirs.results | default([]) | selectattr('stat.exists') | map(attribute='item') | list %}
+
 {% if ubtu26cis_rule_6_2_3_1 %}
--w /etc/sudoers -p wa -k scope
--w /etc/sudoers.d -p wa -k scope
+-a always,exit -F arch=b64 -F path=/etc/sudoers -F perm=wa -k scope
+-a always,exit -F arch=b64 -F dir=/etc/sudoers.d -F perm=wa -k scope
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_2 %}
 {% set syscalls = ["execve"] %}
@@ -13,14 +15,16 @@
 -a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S {{ arch_syscalls|join(',') }} -k user_emulation
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_3 %}
--w {{ ubtu26cis_sudo_logfile }} -p wa -k sudo_log_file
+-a always,exit -F arch=b64 -F path={{ ubtu26cis_sudo_logfile }} -F perm=wa -k sudo_log_file
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_4 %}
-{% set syscalls = ["adjtimex","settimeofday","clock_settime"] %}
+{% set syscalls = ["adjtimex","settimeofday"] %}
 {% set arch_syscalls = syscalls | select("in", supported_syscalls) | list %}
 -a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -k time-change
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -k time-change
--w /etc/localtime -p wa -k time-change
+-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change
+-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -k time-change
+-a always,exit -F arch=b64 -F path=/etc/localtime -F perm=wa -k localtime-change
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_5 %}
 {% set syscalls = ["sethostname","setdomainname"] %}
@@ -29,20 +33,24 @@
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -k system-locale
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_6 %}
--w /etc/issue -p wa -k system-locale
--w /etc/issue.net -p wa -k system-locale
+-a always,exit -F arch=b64 -F path=/etc/issue -F perm=wa -k system-locale
+-a always,exit -F arch=b64 -F path=/etc/issue.net -F perm=wa -k system-locale
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_7 %}
--w /etc/hosts -p wa -k system-locale
--w /etc/hostname -p wa -k system-locale
+-a always,exit -F arch=b64 -F path=/etc/hosts -F perm=wa -k system-locale
+-a always,exit -F arch=b64 -F path=/etc/hostname -F perm=wa -k system-locale
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_8 %}
--w /etc/networks -p wa -k system-locale
--w /etc/network -p wa -k system-locale
--w /etc/netplan -p wa -k system-locale
+-a always,exit -F arch=b64 -F path=/etc/network/interfaces -F perm=wa -k system-locale
+{% if '/etc/network/interfaces.d' in audit_present_dirs %}
+-a always,exit -F arch=b64 -F dir=/etc/network/interfaces.d -F perm=wa -k system-locale
+{% endif %}
+-a always,exit -F arch=b64 -F dir=/etc/netplan/ -F perm=wa -k system-locale
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_9 %}
--w /etc/NetworkManager/ -p wa -k system-locale
+{% if '/etc/NetworkManager' in audit_present_dirs %}
+-a always,exit -F arch=b64 -F dir=/etc/NetworkManager/ -F perm=wa -k system-locale
+{% endif %}
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_10 %}
 {% if discovered_privilege_processes is defined %}
@@ -60,27 +68,27 @@
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F exit=-EPERM -F auid>=1000 -F auid!=unset -k access
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_12 %}
--w /etc/group -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/group -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_13 %}
--w /etc/passwd -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/passwd -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_14 %}
--w /etc/gshadow -p wa -k identity
--w /etc/shadow -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/gshadow -F perm=wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/shadow -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_15 %}
--w /etc/security/opasswd -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/security/opasswd -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_16 %}
--w /etc/nsswitch.conf -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/nsswitch.conf -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_17 %}
--w /etc/pam.conf -p wa -k identity
--w /etc/pam.d -p wa -k identity
+-a always,exit -F arch=b64 -F path=/etc/pam.conf -F perm=wa -k identity
+-a always,exit -F arch=b64 -F dir=/etc/pam.d -F perm=wa -k identity
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_18 %}
-{% set syscalls = ["chmod","fchmod","fchmodat"] %}
+{% set syscalls = ["chmod","fchmod","fchmodat","fchmodat2"] %}
 {% set arch_syscalls = syscalls | select("in", supported_syscalls) | list %}
 -a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k perm_mod
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k perm_mod
@@ -104,13 +112,13 @@
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k mounts
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_22 %}
--w /var/run/utmp -p wa -k session
--w /var/log/wtmp -p wa -k session
--w /var/log/btmp -p wa -k session
+-a always,exit -F arch=b64 -F path=/var/run/utmp -F perm=wa -k session
+-a always,exit -F arch=b64 -F path=/var/log/wtmp -F perm=wa -k session
+-a always,exit -F arch=b64 -F path=/var/log/btmp -F perm=wa -k session
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_23 %}
--w /var/log/lastlog -p wa -k logins
--w /var/run/faillock -p wa -k logins
+-a always,exit -F arch=b64 -F path=/var/log/lastlog -F perm=wa -k logins
+-a always,exit -F arch=b64 -F path=/var/run/faillock -F perm=wa -k logins
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_24 %}
 {% set syscalls = ["unlink","unlinkat"] %}
@@ -119,42 +127,41 @@
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k delete
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_25 %}
-{% set syscalls = ["rename","renameat"] %}
+{% set syscalls = ["rename","renameat","renameat2"] %}
 {% set arch_syscalls = syscalls | select("in", supported_syscalls) | list %}
 -a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k delete
 -a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k delete
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_26 %}
--w /etc/apparmor/ -p wa -k MAC-policy
--w /etc/apparmor.d/ -p wa -k MAC-policy
+-a always,exit -F arch=b64 -F dir=/etc/apparmor -F perm=wa -k MAC-policy
+-a always,exit -F arch=b64 -F dir=/etc/apparmor.d -F perm=wa -k MAC-policy
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_27 %}
--a always,exit -F path=/usr/bin/chcon -F perm=x -F auid>=1000 -F auid!=-1 -k perm_chng
+-a always,exit -F arch=b64 -F path=/usr/bin/chcon -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_28 %}
--a always,exit -F path=/usr/bin/setfacl -F perm=x -F auid>=1000 -F auid!=-1 -k perm_chng
+-a always,exit -F arch=b64 -F path=/usr/bin/setfacl -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_29 %}
--a always,exit -F path=/usr/bin/chacl -F perm=x -F auid>=1000 -F auid!=-1 -k perm_chng
+-a always,exit -F arch=b64 -F path=/usr/bin/chacl -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_30 %}
--a always,exit -F path=/usr/sbin/usermod -F perm=x -F auid>=1000 -F auid!=-1 -k usermod
+-a always,exit -F arch=b64 -F path=/usr/sbin/usermod -F perm=x -F auid>=1000 -F auid!=unset -k usermod
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_31 %}
--a always,exit -F path=/usr/bin/kmod -F perm=x -F auid>=1000 -F auid!=-1 -k kernel_modules
+-a always,exit -F arch=b64 -F path=/usr/bin/kmod -F perm=x -F auid>=1000 -F auid!=unset -k kernel_modules
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_32 %}
 {% set syscalls = ["init_module","finit_module"] %}
 {% set arch_syscalls = syscalls | select("in", supported_syscalls) | list %}
--a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=-1 -k kernel_modules
+-a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k kernel_modules
+-a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k kernel_modules
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_33 %}
 {% set syscalls = ["delete_module"] %}
 {% set arch_syscalls = syscalls | select("in", supported_syscalls) | list %}
--a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=-1 -k kernel_modules
-{% endif %}
-{% if ubtu26cis_rule_6_2_3_34 %}
--c
+-a always,exit -F arch=b64 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k kernel_modules
+-a always,exit -F arch=b32 -S {{ arch_syscalls|join(',') }} -F auid>=1000 -F auid!=unset -k kernel_modules
 {% endif %}
 {% if ubtu26cis_rule_6_2_3_35 %}
 -e 2

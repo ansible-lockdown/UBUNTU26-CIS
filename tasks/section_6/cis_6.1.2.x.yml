@@ -34,7 +34,9 @@
     - rsyslog
   ansible.builtin.systemd:
     name: rsyslog
+    masked: false
     enabled: true
+    state: started
 
 - name: "6.1.2.3 | PATCH | Ensure rsyslog log file creation mode is configured"
   when: ubtu26cis_rule_6_1_2_3
@@ -67,8 +69,6 @@
     - NIST800-53R5_AU-7
     - NIST800-53R5_AU-12
     - rsyslog
-  vars:
-    warn_control_id: '6.1.2.4'
   block:
     - name: "6.1.2.4 | AUDIT | Ensure rsyslog logging is configured | Find configuration file"
       ansible.builtin.shell: |
@@ -99,6 +99,8 @@
       when: not ubtu26cis_rsyslog_ansible_managed
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '6.1.2.4'
 
     - name: "6.1.2.4 | PATCH | Ensure rsyslog logging is configured | Automated rsyslog configuration"
       when: ubtu26cis_rsyslog_ansible_managed
@@ -109,7 +111,7 @@
         insertafter: "{{ item.insertafter }}"
       with_items:
         - { regexp: '^\*.emerg', line: '*.emerg                         :omusrmsg:*', insertafter: '^# Emergencies are sent to everybody logged in' }
-        - { regexp: '^auth,authpriv.\*', line: 'auth,authpriv.*                  /var/log/secure', insertafter: '^# First some standard log files.  Log by facility' }
+        - { regexp: '^auth,authpriv.\*', line: 'auth,authpriv.*                  /var/log/auth.log', insertafter: '^# First some standard log files.  Log by facility' }
         - { regexp: '^mail.\*|^#mail.\*', line: 'mail.*                          -/var/log/mail', insertafter: '^# First some standard log files' }
         - { regexp: '^cron.\*|^#cron.\*', line: 'cron.*                          /var/log/cron', insertafter: '^# First some standard log files' }
         - { regexp: '^mail.info|^#mail.info', line: 'mail.info                      -/var/log/mail.info', insertafter: '^# Logging for the mail system' }
@@ -145,7 +147,7 @@
     dest: /etc/rsyslog.d/60-rsyslog.conf
     owner: root
     group: root
-    mode: '0640'
+    mode: 'u-x,g-wx,o-rwx'
 
 - name: "6.1.2.6 | PATCH | Ensure rsyslog is not configured to receive logs from a remote client"
   when: ubtu26cis_rule_6_1_2_6
@@ -168,8 +170,8 @@
         regexp: '({{ item }})'
         replace: '#\1'
       with_items:
-        - '^(\$ModLoad|module(load="imtcp"))'
-        - '^(\$(InputTCP|InputRELP|UDP)ServerRun|input(type="imtcp" port=".*"))'
+        - '^(\$ModLoad|module\(load="imtcp"\))'
+        - '^(\$(InputTCP|InputRELP|UDP)ServerRun|input\(type="imtcp" port=".*"\))'
       notify: Restart syslog service
 
     - name: "6.1.2.6 | PATCH | Ensure rsyslog is not configured to receive logs from a remote client | When a log server"
@@ -257,7 +259,7 @@
     create: true
     owner: root
     group: root
-    mode: '0640'
+    mode: 'u-x,g-wx,o-rwx'
     block: |
       action(type="omfwd" protocol="tcp" target="{{ ubtu26cis_remote_log_server }}" port="6514" StreamDriver="gtls" StreamDriverMode="1" StreamDriverAuthMode="x509/name")
 
@@ -280,4 +282,4 @@
     create: true
     owner: root
     group: root
-    mode: '0640'
+    mode: 'u-x,g-wx,o-rwx'

@@ -105,49 +105,45 @@
         weekday: "{{ ubtu26cis_aide_cron_weekday | default('*') }}"
         job: "{{ ubtu26cis_aide_cron_job }}"
 
-    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | cron service"
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | cron disables the timer"
       when: ubtu26cis_aide_scan == 'cron'
       ansible.builtin.systemd:
-        name: "{{ item }}"
+        name: dailyaidecheck.timer
         state: stopped
         enabled: false
-        daemon_reload: true
-      loop:
-        - dailyaidecheck.service
-        - dailyaidecheck.timer
 
     - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | timer template"
       when: ubtu26cis_aide_scan == 'timer'
       ansible.builtin.template:
-        src: "{{ item }}.j2"
-        dest: "/{{ item }}"
+        src: etc/systemd/system/dailyaidecheck.timer.j2
+        dest: /etc/systemd/system/dailyaidecheck.timer
         owner: root
         group: root
         mode: 'u-x,g-wx,o-rwx'
-      loop:
-        - etc/systemd/system/dailyaidecheck.service
-        - etc/systemd/system/dailyaidecheck.timer
+      register: discovered_aide_timer_template
 
-    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | timer service"
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | unmask service"
       when: ubtu26cis_aide_scan == 'timer'
       ansible.builtin.systemd:
-        name: "{{ item }}"
-        state: started
+        name: dailyaidecheck.service
+        masked: false
+
+    - name: "6.3.2 | PATCH | Ensure filesystem integrity is regularly checked | timer"
+      when: ubtu26cis_aide_scan == 'timer'
+      ansible.builtin.systemd:
+        name: dailyaidecheck.timer
+        masked: false
         enabled: true
-        daemon_reload: true
-      loop:
-        - dailyaidecheck.service
-        - dailyaidecheck.timer
-      loop_control:
-        label: "{{ item }}"
+        state: started
+        daemon_reload: "{{ discovered_aide_timer_template is changed }}"
 
 - name: "6.3.3 | PATCH | Ensure cryptographic mechanisms are used to protect the integrity of audit tools"
   when:
     - ubtu26cis_rule_6_3_3
     - ubtu26cis_config_aide
   tags:
-    - level1-server
-    - level1-workstation
+    - level2-server
+    - level2-workstation
     - aide
     - file_integrity
     - patch
@@ -161,6 +157,5 @@
       /usr/sbin/auditd p+i+n+u+g+s+b+acl+xattrs+sha512
       /usr/sbin/ausearch p+i+n+u+g+s+b+acl+xattrs+sha512
       /usr/sbin/aureport p+i+n+u+g+s+b+acl+xattrs+sha512
-      /usr/sbin/autrace p+i+n+u+g+s+b+acl+xattrs+sha512
       /usr/sbin/augenrules p+i+n+u+g+s+b+acl+xattrs+sha512
     validate: aide -D --config %s

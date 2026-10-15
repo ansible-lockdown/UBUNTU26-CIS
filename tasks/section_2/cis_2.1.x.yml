@@ -86,9 +86,13 @@
       when:
         - not ubtu26cis_dhcp_server
         - not ubtu26cis_dhcp_mask
-        - "'isc-dhcp-server' in ansible_facts['packages']"
+        - ansible_facts['packages'] | dict2items | selectattr('key', 'match', '^kea') | list | length > 0
       ansible.builtin.package:
-        name: isc-dhcp-server
+        name:
+          - kea
+          - kea-dhcp4-server
+          - kea-dhcp6-server
+          - kea-dhcp-ddns-server
         state: absent
         purge: "{{ ubtu26cis_purge_apt }}"
         lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
@@ -99,15 +103,16 @@
         - ubtu26cis_dhcp_mask
       notify: Systemd_daemon_reload
       ansible.builtin.systemd:
-        name: "{{ item }}"
-        enabled: "{{ ('isc-dhcp-server' in ansible_facts['packages']) | ternary(false, omit) }}"
-        state: "{{ ('isc-dhcp-server' in ansible_facts['packages']) | ternary('stopped', omit) }}"
+        name: "{{ item.unit }}"
+        enabled: "{{ (item.pkg in ansible_facts['packages']) | ternary(false, omit) }}"
+        state: "{{ (item.pkg in ansible_facts['packages']) | ternary('stopped', omit) }}"
         masked: true
       loop:
-        - isc-dhcp-server.service
-        - isc-dhcp-server6.service
+        - { unit: kea-dhcp4-server.service, pkg: kea-dhcp4-server }
+        - { unit: kea-dhcp6-server.service, pkg: kea-dhcp6-server }
+        - { unit: kea-dhcp-ddns-server.service, pkg: kea-dhcp-ddns-server }
       loop_control:
-        label: "{{ item }}"
+        label: "{{ item.unit }}"
 
 - name: "2.1.4 | PATCH | Ensure dns server services are not in use"
   when: ubtu26cis_rule_2_1_4
@@ -186,7 +191,7 @@
   block:
     - name: "2.1.6 | PATCH | Ensure ftp server services are not in use | Remove package"
       when:
-        - "'vsftp' in ansible_facts['packages']"
+        - "'vsftpd' in ansible_facts['packages']"
         - not ubtu26cis_ftp_server
         - not ubtu26cis_ftp_mask
       ansible.builtin.package:
@@ -349,6 +354,7 @@
   when: ubtu26cis_rule_2_1_11
   tags:
     - level1-server
+    - level2-workstation
     - patch
     - cups
     - rule_2.1.11
@@ -544,7 +550,7 @@
         - ubtu26cis_telnet_mask
       notify: Systemd_daemon_reload
       ansible.builtin.systemd:
-        name: inetd.service
+        name: inetutils-inetd.service
         enabled: "{{ ('telnetd' in ansible_facts['packages']) | ternary(false, omit) }}"
         state: "{{ ('telnetd' in ansible_facts['packages']) | ternary('stopped', omit) }}"
         masked: true
@@ -736,8 +742,6 @@
     - postfix
     - rule_2.1.22
     - NIST800-53R5_CM-7
-  vars:
-    warn_control_id: '2.1.22'
   block:
     - name: "2.1.22 | PATCH | Ensure mail transfer agents are configured for local-only mode | Make changes if exim4 installed"
       when: "'exim4' in ansible_facts['packages']"
@@ -769,7 +773,7 @@
         regexp: '^(#)?inet_interfaces\s*=(?!\s*loopback-only\s*).*'
         line: 'inet_interfaces = loopback-only'
 
-    - name: "2.1.22 | WARN | Ensure mail transfer agents are configured for local-only mode | Message out other main agents"
+    - name: "2.1.22 | AUDIT | Ensure mail transfer agents are configured for local-only mode | Message out other main agents"
       when:
         - "'exim4' not in ansible_facts['packages']"
         - "'postfix' not in ansible_facts['packages']"
@@ -778,12 +782,14 @@
           - "Warning!! You are not using either exim4 or postfix, please ensure mail services set for local only mode"
           - "Please review your vendors documentation to configure local-only mode"
 
-    - name: "2.1.22 | WARN | Ensure mail transfer agents are configured for local-only mode | warn_count"
+    - name: "2.1.22 | AUDIT | Ensure mail transfer agents are configured for local-only mode | warn_count"
       when:
         - "'exim4' not in ansible_facts['packages']"
         - "'postfix' not in ansible_facts['packages']"
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '2.1.22'
 
 - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface"
   when: ubtu26cis_rule_2_1_23
@@ -794,8 +800,6 @@
     - services
     - rule_2.1.23
     - NIST800-53R5_CM-7
-  vars:
-    warn_control_id: '2.1.23'
   block:
     - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface | Get list of services"
       ansible.builtin.command: systemctl list-units --type=service  # noqa command-instead-of-module
@@ -814,3 +818,5 @@
     - name: "2.1.23 | AUDIT | Ensure only approved services are listening on a network interface | Warn Count"
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '2.1.23'

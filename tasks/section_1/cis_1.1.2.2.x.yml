@@ -10,7 +10,6 @@
     - rule_1.1.2.2.1
     - NIST800-53R5_CM-7
   vars:
-    warn_control_id: "1.1.2.2.1"
     required_mount: "/dev/shm"
   block:
     - name: "1.1.2.2.1 | AUDIT | Ensure /dev/shm is tmpfs or a separate partition | check for mount"
@@ -21,14 +20,16 @@
       register: discovered_dev_shm_mount
 
     - name: "1.1.2.2.1 | AUDIT | Ensure /dev/shm is tmpfs or a separate partition | Absent"
-      when: discovered_dev_shm_mount is undefined
+      when: discovered_dev_shm_mount.rc != 0
       ansible.builtin.debug:
         msg: "Warning!! {{ required_mount }} is not mounted on a separate partition"
 
     - name: "1.1.2.2.1 | AUDIT | Ensure /dev/shm is tmpfs or a separate partition | Present"
-      when: discovered_dev_shm_mount is undefined
+      when: discovered_dev_shm_mount.rc != 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: "1.1.2.2.1"
 
 - name: "1.1.2.2.2 | PATCH | Ensure nodev option set on /dev/shm partition"
   when:

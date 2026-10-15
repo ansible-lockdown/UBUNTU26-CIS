@@ -13,10 +13,10 @@
     - NIST800-53R5_CM-6
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
-  ansible.builtin.replace:
+  ansible.builtin.lineinfile:
     path: /etc/shells
     regexp: nologin
-    replace: ""
+    state: absent
 
 - name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured"
   when: ubtu26cis_rule_5_4_3_2

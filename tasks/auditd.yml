@@ -42,6 +42,15 @@
   check_mode: false
   register: discovered_auditd_immutable_check
 
+- name: "POST | AUDITD | Discover optional directories watched by 6.2.3.8 and 6.2.3.9"
+  when: update_audit_template
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /etc/network/interfaces.d
+    - /etc/NetworkManager
+  register: discovered_audit_optional_dirs
+
 - name: "POST | AUDITD | Apply auditd template for section 6.2.4.x"
   when: update_audit_template
   vars:
@@ -53,6 +62,19 @@
     group: root
     mode: 'u-x,go-wx'
   register: discovered_audit_rules_updated
+  notify: Update auditd
+
+- name: "POST | AUDITD | Load rules regardless of errors for 6.2.3.34"
+  when:
+    - update_audit_template
+    - ubtu26cis_rule_6_2_3_34
+  ansible.builtin.lineinfile:
+    path: /etc/audit/rules.d/01-initialize.rules
+    line: '-c'
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-wx'
   notify: Update auditd
 
 - name: POST | AUDITD | Set up auditd user logging exceptions

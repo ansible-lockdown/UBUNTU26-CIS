@@ -117,11 +117,9 @@
       register: discovered_pam_authtok
 
     - name: "5.3.3.4.4 | PATCH | Ensure pam_unix includes use_authtok | pam_files"
-      when:
-        - discovered_pam_authtok is defined
-        - discovered_pam_authtok | length > 0
+      when: discovered_pam_authtok.stdout | length == 0
       ansible.builtin.lineinfile:
         path: /etc/pam.d/common-password
-        regexp: ^(\s*password\s+[success=end.*]\s+pam_unix\.so)(.*)\s+use_authtok\s*=\s*\S+(.*$)
-        line: \1\2\3 use_authtok
+        regexp: '^(\s*password\s+\S+\s+pam_unix\.so)(.*)$'
+        line: '\1\2 use_authtok'
         backrefs: true

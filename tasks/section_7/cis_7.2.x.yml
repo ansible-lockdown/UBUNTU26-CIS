@@ -1,9 +1,7 @@
 ---
 
 - name: "7.2.9/10 | AUDIT | Interactive User accounts home directories"
-  when:
-    - ubtu26cis_rule_7_2_9
-    - ubtu26cis_rule_7_2_10
+  when: ubtu26cis_rule_7_2_9 or ubtu26cis_rule_7_2_10
   tags:
     - level1-server
     - level1-workstation
@@ -34,8 +32,6 @@
     - rule_7.2.1
     - NIST800-53R5_IA-5
     - user_accounts
-  vars:
-    warn_control_id: '7.2.1'
   block:
     - name: "7.2.1 | AUDIT | Ensure accounts in /etc/passwd use shadowed passwords | Get users not using shadowed passwords"
       ansible.builtin.command: awk -F':' '($2 != "x" ) { print $1}' /etc/passwd
@@ -51,10 +47,12 @@
           - "Warning!! You have users that are not using a shadowed password. Please convert the below accounts to use a shadowed password"
           - "{{ discovered_nonshadowed_users.stdout_lines }}"
 
-    - name: "7.2.1 | WARNING | Ensure accounts in /etc/passwd use shadowed passwords | warn_count"
+    - name: "7.2.1 | AUDIT | Ensure accounts in /etc/passwd use shadowed passwords | warn_count"
       when: discovered_nonshadowed_users.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.1'
 
 - name: "7.2.2 | PATCH | Ensure /etc/shadow password fields are not empty"
   when: ubtu26cis_rule_7_2_2
@@ -79,8 +77,7 @@
       ansible.builtin.user:
         name: "{{ item }}"
         password_lock: true
-      loop:
-        - "{{ discovered_empty_password_acct.stdout_lines }}"
+      loop: "{{ discovered_empty_password_acct.stdout_lines }}"
       loop_control:
         label: "{{ item }}"
 
@@ -97,8 +94,6 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - groups
-  vars:
-    warn_control_id: '7.2.3'
   block:
     - name: "7.2.3 | AUDIT | Ensure all groups in /etc/passwd exist in /etc/group | Check /etc/passwd entries"
       ansible.builtin.shell: |
@@ -116,10 +111,12 @@
       ansible.builtin.debug:
         msg: "Warning!! The following users have non-existent GIDs (Groups): {{ discovered_passwd_gid_check.stdout_lines | join(', ') }}"
 
-    - name: "7.2.3 | WARNING | Ensure all groups in /etc/passwd exist in /etc/group | warn_count"
+    - name: "7.2.3 | AUDIT | Ensure all groups in /etc/passwd exist in /etc/group | warn_count"
       when: discovered_passwd_gid_check.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.3'
 
 - name: "7.2.4 | PATCH | Ensure shadow group is empty"
   when: ubtu26cis_rule_7_2_4
@@ -130,8 +127,6 @@
     - rule_7.2.4
     - NIST800-53R5_IA-5
     - user
-  vars:
-    warn_control_id: '7.2.4'
   block:
     - name: "7.2.4 | AUDIT | Ensure shadow group is empty | check users in group"
       ansible.builtin.getent:
@@ -148,6 +143,8 @@
       when: ansible_facts['getent_group']['shadow'][2] | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.4'
 
 - name: "7.2.5 | AUDIT | Ensure no duplicate UIDs exist"
   when: ubtu26cis_rule_7_2_5
@@ -162,8 +159,6 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - user
-  vars:
-    warn_control_id: '7.2.5'
   block:
     - name: "7.2.5 | AUDIT | Ensure no duplicate UIDs exist | Check for duplicate UIDs"
       ansible.builtin.shell: |
@@ -185,6 +180,8 @@
       when: discovered_user_uid_check.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.5'
 
 - name: "7.2.6 | AUDIT | Ensure no duplicate GIDs exist"
   when: ubtu26cis_rule_7_2_6
@@ -199,8 +196,6 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - groups
-  vars:
-    warn_control_id: '7.2.6'
   block:
     - name: "7.2.6 | AUDIT | Ensure no duplicate GIDs exist | Check for duplicate GIDs"
       ansible.builtin.shell: |
@@ -222,6 +217,8 @@
       when: discovered_user_gid_check.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.6'
 
 - name: "7.2.7 | AUDIT | Ensure no duplicate user names exist"
   when: ubtu26cis_rule_7_2_7
@@ -236,8 +233,6 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - user
-  vars:
-    warn_control_id: '7.2.7'
   block:
     - name: "7.2.7 | AUDIT | Ensure no duplicate user names exist | Check for duplicate User Names"
       ansible.builtin.shell: |
@@ -250,15 +245,17 @@
       check_mode: false
       register: discovered_username_check
 
-    - name: "7.2.7 | WARNING | Ensure no duplicate user names exist | Print warning about users with duplicate User Names"
+    - name: "7.2.7 | AUDIT | Ensure no duplicate user names exist | Print warning about users with duplicate User Names"
       when: discovered_username_check.stdout | length > 0
       ansible.builtin.debug:
-        msg: "Warning!! The following user names are duplicates: {{ discovered_user_username_check.stdout_lines }}"
+        msg: "Warning!! The following user names are duplicates: {{ discovered_username_check.stdout_lines }}"
 
-    - name: "7.2.7 | WARNING | Ensure no duplicate user names exist | Set warning count"
+    - name: "7.2.7 | AUDIT | Ensure no duplicate user names exist | Set warning count"
       when: discovered_username_check.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.7'
 
 - name: "7.2.8 | AUDIT | Ensure no duplicate group names exist"
   when: ubtu26cis_rule_7_2_8
@@ -273,13 +270,11 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - groups
-  vars:
-    warn_control_id: '7.2.8'
   block:
     - name: "7.2.8 | AUDIT | Ensure no duplicate group names exist | Check for duplicate group names"
       ansible.builtin.shell: |
         set -o pipefail
-        getent passwd | cut -d: -f1 | sort -n | uniq -d
+        getent group | cut -d: -f1 | sort | uniq -d
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
       changed_when: false
@@ -290,12 +285,14 @@
     - name: "7.2.8 | AUDIT | Ensure no duplicate group names exist | Print warning about users with duplicate group names"
       when: discovered_group_check.stdout | length > 0
       ansible.builtin.debug:
-        msg: "Warning!! The following group names are duplicates: {{ discovered_group_group_check.stdout_lines }}"
+        msg: "Warning!! The following group names are duplicates: {{ discovered_group_check.stdout_lines }}"
 
     - name: "7.2.8 | AUDIT | Ensure no duplicate group names exist | Set warning count"
       when: discovered_group_check.stdout | length > 0
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.8'
 
 - name: "7.2.9 | PATCH | Ensure local interactive user home directories are configured"
   when: ubtu26cis_rule_7_2_9
@@ -354,8 +351,6 @@
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
     - user
-  vars:
-    warn_control_id: '7.2.10'
   block:
     - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured"
       ansible.builtin.shell: |
@@ -382,6 +377,8 @@
         - not ubtu26cis_dotperm_ansiblemanaged
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.10'
 
     - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured"
       when:
@@ -445,8 +442,6 @@
     - rule_7.2.11
     - NIST800-53R5_AC-6
     - user
-  vars:
-    warn_control_id: '7.2.11'
   block:
     - name: "7.2.11 | AUDIT | Ensure local interactive user dot directories access is configured"
       ansible.builtin.shell: |
@@ -473,6 +468,8 @@
         - not ubtu26cis_dotperm_ansiblemanaged
       ansible.builtin.import_tasks:
         file: warning_facts.yml
+      vars:
+        warn_control_id: '7.2.11'
 
     - name: "7.2.11 | PATCH | Ensure local interactive user dot directories access is configured | Changes directories mode"
       when:
