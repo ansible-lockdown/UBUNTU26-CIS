@@ -96,8 +96,7 @@
         name: "{{ item }}"
         group: 0
         state: absent
-      loop:
-        - discovered_gid0_members.stdout_lines
+      loop: "{{ discovered_gid0_members.stdout_lines }}"
       loop_control:
         label: "{{ item }}"
 
@@ -136,7 +135,7 @@
           - "Warning!! You have other groups assigned to GID 0 - Please resolve"
           - "{{ discovered_gid0_groups.stdout_lines }}"
 
-    - name: "5.4.2.3 | WARN | Ensure group root is the only GID 0 group | warn_count"
+    - name: "5.4.2.3 | AUDIT | Ensure group root is the only GID 0 group | warn_count"
       when:
         - discovered_gid0_groups is defined
         - discovered_gid0_groups.stdout | length > 0
@@ -231,7 +230,7 @@
           register: discovered_root_path_perms
           loop: "{{ discovered_root_paths_split.stdout_lines }}"
 
-        - name: "5.4.2.5 | AUDIT | Ensure root path integrity | Set permissions"
+        - name: "5.4.2.5 | PATCH | Ensure root path integrity | Set permissions"
           when:
             - item.stat.exists
             - item.stat.isdir

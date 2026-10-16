@@ -70,17 +70,19 @@
     - wireless
   block:
     - name: "3.1.2 | AUDIT | Ensure wireless interfaces are not available | Discover is wireless adapter on system"
-      ansible.builtin.command: find /sys/class/net/*/ -type d -name wireless
+      ansible.builtin.shell: find /sys/class/net/*/ -type d -name wireless
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
       changed_when: false
-      failed_when: prelim_wireless_adapters.rc not in [ 0, 1 ]
+      failed_when: discovered_wireless_adapters.rc not in [ 0, 1 ]
       check_mode: false
-      register: prelim_wireless_adapters
+      register: discovered_wireless_adapters
 
     - name: "3.1.2 | AUDIT | Ensure wireless interfaces are not available | If wireless adapter present capture module"
-      when: prelim_wireless_adapters.rc == 0
+      when: discovered_wireless_adapters.rc == 0
       ansible.builtin.shell: |
         set -o pipefail
-        for driverdir in $(find /sys/class/net/*/ -type d -name wireless | xargs -0 dirname);
+        for driverdir in $(find /sys/class/net/*/ -type d -name wireless | xargs -r -n1 dirname);
           do basename "$(readlink -f "$driverdir"/device/driver/module)";
         done | sort -u
       args:

@@ -4,7 +4,9 @@
 Description=Daily AIDE check
 
 [Timer]
-OnCalendar={{ ubtu26cis_aide_cron_day }}-{{ ubtu26cis_aide_cron_month }}-{{ ubtu26cis_aide_cron_weekday }} {{ ubtu26cis_aide_cron_hour }}:{{ ubtu26cis_aide_cron_minute }}:00
+{% set aide_dow = ubtu26cis_aide_cron_weekday | string %}
+{% set aide_dow = {'0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu', '5': 'Fri', '6': 'Sat', '7': 'Sun'}.get(aide_dow, aide_dow) %}
+OnCalendar={% if aide_dow != '*' %}{{ aide_dow }} {% endif %}*-{{ ubtu26cis_aide_cron_month }}-{{ ubtu26cis_aide_cron_day }} {{ ubtu26cis_aide_cron_hour }}:{{ ubtu26cis_aide_cron_minute }}:00
 Persistent=true
 
 [Install]

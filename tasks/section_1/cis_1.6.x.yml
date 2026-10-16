@@ -203,7 +203,7 @@
     - permissions
     - banner
   ansible.builtin.file:
-    path: /etc/issue.net
+    path: "{{ ubtu26cis_sshd_banner_file }}"
     owner: root
     group: root
     mode: 'u-x,go-wx'
@@ -222,10 +222,10 @@
     state: stopped
     enabled: false
     masked: true
-  register: discovered_update_notifier_motd_service
   failed_when:
     - discovered_update_notifier_motd_service.failed
     - '"Could not find the requested service" not in discovered_update_notifier_motd_service.msg'
+  register: discovered_update_notifier_motd_service
 
 - name: "1.6.12 | PATCH | Ensure update-notifier-motd.timer is not in use"
   when: ubtu26cis_rule_1_6_12
@@ -240,7 +240,7 @@
     state: stopped
     enabled: false
     masked: true
-  register: discovered_update_notifier_motd_timer
   failed_when:
     - discovered_update_notifier_motd_timer.failed
     - '"Could not find the requested service" not in discovered_update_notifier_motd_timer.msg'
+  register: discovered_update_notifier_motd_timer

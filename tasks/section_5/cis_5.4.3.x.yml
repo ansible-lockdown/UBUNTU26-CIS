@@ -13,10 +13,10 @@
     - NIST800-53R5_CM-6
     - NIST800-53R5_CM-7
     - NIST800-53R5_IA-5
-  ansible.builtin.replace:
+  ansible.builtin.lineinfile:
     path: /etc/shells
     regexp: nologin
-    replace: ""
+    state: absent
 
 - name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured"
   when: ubtu26cis_rule_5_4_3_2
@@ -33,7 +33,7 @@
         path: "{{ ubtu26cis_shell_session_file }}"
       register: discovered_shell_session_file
 
-    - name: "5.4.3.2 | AUDIT | Ensure default user shell timeout is configured | Remove shell timeout files"
+    - name: "5.4.3.2 | PATCH | Ensure default user shell timeout is configured | Remove shell timeout files"
       when: discovered_shell_session_file.stat.exists
       ansible.builtin.replace:
         path: "{{ ubtu26cis_shell_session_file }}"
@@ -48,9 +48,7 @@
         create: true
         mode: 'u-x,go-wx'
         block: |
-          TMOUT={{ ubtu26cis_shell_session_timeout }}
-          readonly TMOUT
-          export TMOUT
+          typeset -xr TMOUT={{ ubtu26cis_shell_session_timeout }}
       loop:
         - { path: "{{ ubtu26cis_shell_session_file }}", state: present }
         - { path: /etc/profile, state: "{{ (ubtu26cis_shell_session_file == '/etc/profile') | ternary('present', 'absent') }}" }

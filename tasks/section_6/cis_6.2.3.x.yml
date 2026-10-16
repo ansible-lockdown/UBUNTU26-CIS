@@ -447,12 +447,11 @@
   ansible.builtin.set_fact:
     update_audit_template: true
 
-- name: "6.2.3.36 | PATCH | Ensure the running and on disk configuration is the same"
+- name: "6.2.3.36 | AUDIT | Ensure the running and on disk configuration is the same"
   when: ubtu26cis_rule_6_2_3_36
   tags:
     - level2-server
     - level2-workstation
-    - scored
     - audit
     - rule_6.2.3.36
     - NIST800-53R5_AU-3

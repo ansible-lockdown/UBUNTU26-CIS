@@ -3,7 +3,7 @@
 galaxy_info:
   author: "Ansible-Lockdown Team"
   description: "Apply the Ubuntu 26 CIS benchmarks"
-  company: "MindPoint Group - A Tyto Athene Company"
+  company: "MindPoint Group - A Quantum Sky Company"
   license: MIT
   namespace: mindpointgroup
   role_name: ubuntu26_cis
@@ -11,7 +11,7 @@ galaxy_info:
   platforms:
     - name: Ubuntu
       versions:
-        - noble
+        - resolute
   galaxy_tags:
     - system
     - security

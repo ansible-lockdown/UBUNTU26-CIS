@@ -1,7 +1,9 @@
 ---
 
 - name: "2.4.2.1 | PATCH | Ensure access to at is configured"
-  when: ubtu26cis_rule_2_4_2_1
+  when:
+    - ubtu26cis_rule_2_4_2_1
+    - "'at' in ansible_facts['packages']"
   tags:
     - level1-server
     - level1-workstation
@@ -16,6 +18,17 @@
         path: /etc/at.deny
         state: absent
 
+    - name: "2.4.2.1 | AUDIT | Ensure access to at is configured | Check for daemon group"
+      ansible.builtin.shell: |
+        set -o pipefail
+        getent group daemon | cut -d: -f1
+      args:
+        executable: "{{ ubtu26cis_shell_executable }}"
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      register: discovered_at_groups
+
     - name: "2.4.2.1 | PATCH | Ensure access to at is configured | Check for at.allow"
       ansible.builtin.stat:
         path: /etc/at.allow
@@ -26,7 +39,7 @@
       ansible.builtin.file:
         path: /etc/at.allow
         owner: root
-        group: root
+        group: "{{ ('daemon' in discovered_at_groups.stdout_lines) | ternary('daemon', 'root') }}"
         mode: 'u-x,g-wx,o-rwx'
         state: touch
 
@@ -35,5 +48,5 @@
       ansible.builtin.file:
         path: /etc/at.allow
         owner: root
-        group: root
+        group: "{{ ('daemon' in discovered_at_groups.stdout_lines) | ternary('daemon', 'root') }}"
         mode: 'u-x,g-wx,o-rwx'

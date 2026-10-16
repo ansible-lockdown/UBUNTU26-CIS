@@ -69,9 +69,10 @@
     - ubtu26cis_rule_4_1_4
     - ubtu26cis_ufw_allow_out_ports != "all"
   tags:
-    - level1-server
-    - level1-workstation
+    - level2-server
+    - level2-workstation
     - patch
+    - rule_4.1.4
     - ufw
   community.general.ufw:
     rule: allow
@@ -88,9 +89,10 @@
     - ubtu26cis_rule_4_1_4
     - ubtu26cis_ufw_allow_out_ports == "all"
   tags:
-    - level1-server
-    - level1-workstation
+    - level2-server
+    - level2-workstation
     - patch
+    - rule_4.1.4
     - ufw
   community.general.ufw:
     rule: allow
@@ -100,8 +102,8 @@
 - name: "4.1.4 | PATCH | Ensure ufw outgoing default is configured"
   when: ubtu26cis_rule_4_1_4
   tags:
-    - level1-server
-    - level1-workstation
+    - level2-server
+    - level2-workstation
     - patch
     - rule_4.1.4
     - NIST800-53R5_SC-7
@@ -138,7 +140,11 @@
   when:
     - ubtu26cis_ufw_use_sysctl
     - discovered_ufw_conf_files.results[0].stat.exists | default(false)
-  tags: always
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - ufw
   ansible.builtin.lineinfile:
     path: /etc/default/ufw
     regexp: ^IPT_SYSCTL=.*
@@ -152,7 +158,13 @@
   when:
     - discovered_ufw_conf_files.results[1].stat.exists | default(false)
     - item.rule
-  tags: always
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - rule_3.3.1.16
+    - rule_3.3.1.17
+    - ufw
   ansible.builtin.replace:
     path: /etc/ufw/sysctl.conf
     regexp: '^\s*#?\s*net/ipv4/conf/{{ item.scope }}/log_martians\s*=.*$'

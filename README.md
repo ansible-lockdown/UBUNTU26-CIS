@@ -94,7 +94,7 @@ This role **will make changes to the system** which may have unintended conseque
 CIS release always contains changes, it is highly recommended to review the new references and available variables. This have changed significantly since ansible-lockdown initial release.
 This is now compatible with python3 if it is found to be the default interpreter. This does come with pre-requisites which it configures the system accordingly.
 
-Further details can be seen in the [Changelog](./ChangeLog.md)
+Further details can be seen in the [Changelog](./Changelog.md)
 
 ---
 
@@ -128,7 +128,7 @@ The control found in defaults main also need to reflect this as this control the
 
 UBUNTU 26 - Other versions are not supported.
 
-- Access to download or add the goss binary and content to the system if using auditing
+- Access to download or add the syver binary and content to the system if using auditing
 (other options are available on how to get the content to the system.)
 - Python3.12+
 - Ansible 2.16+
@@ -138,12 +138,14 @@ UBUNTU 26 - Other versions are not supported.
 
 ## Auditing
 
-This can be turned on or off within the defaults/main.yml file with the variable run_audit. The value is false by default, please refer to the wiki for more details. The defaults file also populates the goss checks to check only the controls that have been enabled in the ansible role.
+This can be turned on or off within the defaults/main.yml file with the variable run_audit. The value is false by default, please refer to the wiki for more details. The defaults file also populates the audit checks to check only the controls that have been enabled in the ansible role.
 
 This is a much quicker, very lightweight, checking (where possible) config compliance and live/running settings.
 
-A new form of auditing has been developed, by using a small (16MB) go binary called [goss](https://github.com/krameff/goss) along with the relevant configurations to check. Without the need for infrastructure or other tooling.
+A new form of auditing has been developed, by using a small go binary called [syver](https://github.com/krameff/syver), the continuation of [goss](https://github.com/krameff/goss), along with the relevant configurations to check. Without the need for infrastructure or other tooling.
 This audit will not only check the config has the correct setting but aims to capture if it is running with that configuration also trying to remove [false positives](https://www.mindpointgroup.com/blog/is-compliance-scanning-still-relevant/) in the process.
+
+Syver replaces goss as it is a signed fork that is regularly updated, and it reads the same goss audit content unchanged.
 
 Refer to [UBUNTU26-CIS-Audit](https://github.com/ansible-lockdown/UBUNTU26-CIS-Audit).
 
@@ -154,26 +156,26 @@ Note: More tests are run during audit as we check config and running state.
 
 ```txt
 
-ok: [ubuntu2404] => {
+ok: [ub26-bios-test] => {
     "msg": [
-        "The pre remediation audit results are: Count: 778, Failed: 330, Skipped: 38, Duration: 3.609s",
-        "The post remediation audit results are: Count: 778, Failed: 26, Skipped: 5, Duration: 4.280s",
+        "The pre remediation audit results are: Count: 868, Failed: 333, Skipped: 51, Duration: 2.592s",
+        "The post remediation audit results are: Count: 868, Failed: 22, Skipped: 12, Duration: 1.833s",
         "Full breakdown can be found in /opt",
         ""
     ]
 }
 
 PLAY RECAP *******************************************************************************************************************************************
-default                    : ok=270  changed=23   unreachable=0    failed=0    skipped=140  rescued=0    ignored=0
+ub26-bios-test             : ok=534  changed=248  unreachable=0    failed=0    skipped=228  rescued=0    ignored=0
 ```
 
 ## Documentation
 
 - [Read The Docs](https://ansible-lockdown.readthedocs.io/en/latest/)
-- [Getting Started](https://www.lockdownenterprise.com/docs/getting-started-with-lockdown#GH_AL_UBUNTU26_cis)
-- [Customizing Roles](https://www.lockdownenterprise.com/docs/customizing-lockdown-enterprise#GH_AL_UBUNTU26_cis)
-- [Per-Host Configuration](https://www.lockdownenterprise.com/docs/per-host-lockdown-enterprise-configuration#GH_AL_UBUNTU26_cis)
-- [Getting the Most Out of the Role](https://www.lockdownenterprise.com/docs/get-the-most-out-of-lockdown-enterprise#GH_AL_UBUNTU26_cis)
+- [Getting Started](https://www.lockdownenterprise.com/docs/getting-started-with-lockdown#GH_AL_UBUNTU26_CIS)
+- [Customizing Roles](https://www.lockdownenterprise.com/docs/customizing-lockdown-enterprise#GH_AL_UBUNTU26_CIS)
+- [Per-Host Configuration](https://www.lockdownenterprise.com/docs/per-host-lockdown-enterprise-configuration#GH_AL_UBUNTU26_CIS)
+- [Getting the Most Out of the Role](https://www.lockdownenterprise.com/docs/get-the-most-out-of-lockdown-enterprise#GH_AL_UBUNTU26_CIS)
 
 
 ## Role Variables

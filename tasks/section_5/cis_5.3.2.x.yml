@@ -21,9 +21,10 @@
         grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-account
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_unix_account
       changed_when: false
       failed_when: discovered_pam_unix_account.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_unix_account
 
     - name: "5.3.2.1 | AUDIT | Ensure pam_unix module is enabled | Check common-session for pam_unix.so"
       ansible.builtin.shell: |
@@ -31,9 +32,10 @@
         grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-session
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_unix_session
       changed_when: false
       failed_when: discovered_pam_unix_session.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_unix_session
 
     - name: "5.3.2.1 | AUDIT | Ensure pam_unix module is enabled | Check common-auth for pam_unix.so"
       ansible.builtin.shell: |
@@ -41,9 +43,10 @@
         grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-auth
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_unix_auth
       changed_when: false
       failed_when: discovered_pam_unix_auth.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_unix_auth
 
     - name: "5.3.2.1 | AUDIT | Ensure pam_unix module is enabled | Check common-password for pam_unix.so"
       ansible.builtin.shell: |
@@ -51,9 +54,10 @@
         grep -P -- '\bpam_unix\.so\b' /etc/pam.d/common-password
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_unix_password
       changed_when: false
       failed_when: discovered_pam_unix_password.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_unix_password
 
     - name: "5.3.2.1 | PATCH | Ensure pam_unix module is enabled | Ensure template"
       ansible.builtin.template:
@@ -95,9 +99,10 @@
         grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-auth
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_faillock_auth
       changed_when: false
       failed_when: discovered_pam_faillock_auth.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_faillock_auth
 
     - name: "5.3.2.2 | AUDIT | Ensure pam_faillock module is enabled | Check common-account for pam_faillock.so"
       ansible.builtin.shell: |
@@ -105,9 +110,10 @@
         grep -P -- '\bpam_faillock\.so\b' /etc/pam.d/common-account
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_faillock_account
       changed_when: false
       failed_when: discovered_pam_faillock_account.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_faillock_account
 
     - name: "5.3.2.2 | PATCH | Ensure pam_faillock module is enabled | Ensure templates"
       ansible.builtin.template:
@@ -155,9 +161,10 @@
         grep -P -- '\bpam_pwquality\.so\b' /etc/pam.d/common-password
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_pwquality_password
       changed_when: false
       failed_when: discovered_pam_pwquality_password.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_pwquality_password
 
     - name: "5.3.2.3 | PATCH | Ensure pam_pwquality module is enabled | Ensure template"
       ansible.builtin.template:
@@ -195,9 +202,10 @@
         grep -P -- '\bpam_pwhistory\.so\b' /etc/pam.d/common-password
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
-      register: discovered_pam_pwhistory_password
       changed_when: false
       failed_when: discovered_pam_pwhistory_password.rc not in [0, 1]
+      check_mode: false
+      register: discovered_pam_pwhistory_password
 
     - name: "5.3.2.4 | PATCH | Ensure pam_pwhistory module is enabled | Ensure template"
       ansible.builtin.template:

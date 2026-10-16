@@ -3,7 +3,7 @@
 - name: "2.2.1 | PATCH | Ensure nis client is not installed"
   when:
     - ubtu26cis_rule_2_2_1
-    - not ubtu26cis_nis_server
+    - not ubtu26cis_nis_client_required
   tags:
     - level1-server
     - level1-workstation
@@ -68,6 +68,7 @@
     name:
       - telnet
       - inetutils-telnet
+      - telnet-ssl
     state: absent
     purge: "{{ ubtu26cis_purge_apt }}"
     lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"
@@ -105,6 +106,9 @@
     name:
       - ftp
       - tnftp
+      - atftp
+      - inetutils-ftp
+      - ftp-ssl
     state: absent
     purge: "{{ ubtu26cis_purge_apt }}"
     lock_timeout: "{{ ubtu26cis_apt_lock_timeout }}"

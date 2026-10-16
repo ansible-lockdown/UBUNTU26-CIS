@@ -27,7 +27,28 @@
     group: root
     mode: 'u+x,g-w,o-rwx'
 
-- name: "5.3.3.2.x | PATCH | Look for existing configs"
+- name: "5.3.3.2.1-7 | AUDIT | Look for existing configs"
+  when:
+    - ubtu26cis_rule_5_3_3_2_1 or
+      ubtu26cis_rule_5_3_3_2_2 or
+      ubtu26cis_rule_5_3_3_2_3 or
+      ubtu26cis_rule_5_3_3_2_4 or
+      ubtu26cis_rule_5_3_3_2_5 or
+      ubtu26cis_rule_5_3_3_2_6 or
+      ubtu26cis_rule_5_3_3_2_7
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - pam
+    - rule_5.3.3.2.1
+    - rule_5.3.3.2.2
+    - rule_5.3.3.2.3
+    - rule_5.3.3.2.4
+    - rule_5.3.3.2.5
+    - rule_5.3.3.2.6
+    - rule_5.3.3.2.7
+    - NIST800-53R5_IA-5
   ansible.builtin.find:
     paths:
       - /etc/security/pwquality.conf.d/
