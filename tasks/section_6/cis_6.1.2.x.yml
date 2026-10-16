@@ -73,7 +73,7 @@
     - name: "6.1.2.4 | AUDIT | Ensure rsyslog logging is configured | Find configuration file"
       ansible.builtin.shell: |
         set -o pipefail
-        grep -r "*.emerg" /etc/* | cut -f1 -d":"
+        grep -lrs '^\*\.emerg' /etc/rsyslog.conf /etc/rsyslog.d/ | head -1 | grep . || echo /etc/rsyslog.conf
       args:
         executable: "{{ ubtu26cis_shell_executable }}"
       changed_when: false

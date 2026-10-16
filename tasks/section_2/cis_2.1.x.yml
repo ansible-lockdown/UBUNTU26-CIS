@@ -763,7 +763,9 @@
         - { regexp: '^dc_localdelivery', line: "dc_localdelivery='mail_spool'" }
       loop_control:
         label: "{{ item }}"
-      notify: Restart exim4
+      notify:
+        - Update exim4 config
+        - Restart exim4
 
     - name: "2.1.22 | PATCH | Ensure mail transfer agents are configured for local-only mode | Make changes if postfix is installed"
       when: "'postfix' in ansible_facts['packages']"

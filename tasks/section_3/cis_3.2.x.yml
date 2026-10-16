@@ -30,6 +30,12 @@
         create: true
         mode: 'go-rwx'
 
+    - name: "3.2.1 | PATCH | Ensure atm kernel module is not available | unload"
+      community.general.modprobe:
+        name: atm
+        state: absent
+      failed_when: false
+
 - name: "3.2.2 | PATCH | Ensure can kernel module is not available"
   when: ubtu26cis_rule_3_2_2
   tags:
@@ -59,6 +65,12 @@
         line: "blacklist can"
         create: true
         mode: 'go-rwx'
+
+    - name: "3.2.2 | PATCH | Ensure can kernel module is not available | unload"
+      community.general.modprobe:
+        name: can
+        state: absent
+      failed_when: false
 
 - name: "3.2.3 | PATCH | Ensure dccp kernel module is not available"
   when: ubtu26cis_rule_3_2_3
@@ -90,6 +102,12 @@
         create: true
         mode: 'go-rwx'
 
+    - name: "3.2.3 | PATCH | Ensure dccp kernel module is not available | unload"
+      community.general.modprobe:
+        name: dccp
+        state: absent
+      failed_when: false
+
 - name: "3.2.4 | PATCH | Ensure rds kernel module is not available"
   when: ubtu26cis_rule_3_2_4
   tags:
@@ -119,6 +137,12 @@
         line: "blacklist rds"
         create: true
         mode: 'go-rwx'
+
+    - name: "3.2.4 | PATCH | Ensure rds kernel module is not available | unload"
+      community.general.modprobe:
+        name: rds
+        state: absent
+      failed_when: false
 
 - name: "3.2.5 | PATCH | Ensure sctp kernel module is not available"
   when: ubtu26cis_rule_3_2_5
@@ -150,6 +174,12 @@
         create: true
         mode: 'go-rwx'
 
+    - name: "3.2.5 | PATCH | Ensure sctp kernel module is not available | unload"
+      community.general.modprobe:
+        name: sctp
+        state: absent
+      failed_when: false
+
 - name: "3.2.6 | PATCH | Ensure tipc kernel module is not available"
   when: ubtu26cis_rule_3_2_6
   tags:
@@ -179,6 +209,12 @@
         line: "blacklist tipc"
         create: true
         mode: 'go-rwx'
+
+    - name: "3.2.6 | PATCH | Ensure tipc kernel module is not available | unload"
+      community.general.modprobe:
+        name: tipc
+        state: absent
+      failed_when: false
 
 - name: "3.2.7 | AUDIT | Ensure unneeded network protocol kernel modules are not available"
   when: ubtu26cis_rule_3_2_7

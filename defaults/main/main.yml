@@ -654,7 +654,7 @@ ubtu26cis_sysctl_kernel_conf: /etc/sysctl.d/98_cis_kernel.conf
 #        with PTRACE_ATTACH, or through children calling PTRACE_TRACEME.
 # - 3 -> no attach: no processes may use ptrace with PTRACE_ATTACH nor
 #        via PTRACE_TRACEME. Once set, this sysctl value cannot be changed.
-ubtu26_ptrace_value: 1
+ubtu26cis_ptrace_value: 1
 
 ## Controls 1.6.x - Warning banners
 # The controls 1.6.x set various warning banners and protect the respective files
@@ -955,6 +955,9 @@ ubtu26cis_sshd_macs:
   - hmac-sha2-256
 # - hmac-sha2-384 # hashed out seen as bad ssh2 MAC
   - hmac-sha2-512
+# CIS 5.1.x sshd settings are written to this drop-in. It must sort before any other drop-in so its values
+# win (sshd uses the first value it reads), and sshd_config must Include /etc/ssh/sshd_config.d/*.conf.
+ubtu26cis_sshd_cis_conf: /etc/ssh/sshd_config.d/00-cis-sshd.conf
 # This variable is used to state the key exchange algorithms used to establish secure encryption
 # keys during the initial connection setup.
 # The first two are the post-quantum hybrid algorithms required by 5.1.14 (OpenSSH 9.9 or later).

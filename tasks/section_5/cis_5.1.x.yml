@@ -109,6 +109,21 @@
       loop_control:
         label: "{{ item.path }}"
 
+- name: "5.1.x | PATCH | Ensure sshd_config includes sshd_config.d drop-ins"
+  when: ubtu26cis_rule_5_1_5 or ubtu26cis_rule_5_1_6 or ubtu26cis_rule_5_1_7 or ubtu26cis_rule_5_1_8 or ubtu26cis_rule_5_1_9 or ubtu26cis_rule_5_1_10 or ubtu26cis_rule_5_1_11 or ubtu26cis_rule_5_1_12 or ubtu26cis_rule_5_1_13 or ubtu26cis_rule_5_1_15 or ubtu26cis_rule_5_1_16 or ubtu26cis_rule_5_1_17 or ubtu26cis_rule_5_1_18 or ubtu26cis_rule_5_1_19 or ubtu26cis_rule_5_1_20 or ubtu26cis_rule_5_1_21 or ubtu26cis_rule_5_1_22 or ubtu26cis_rule_5_1_23 or ubtu26cis_rule_5_1_24
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - sshd
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*Include\s+/etc/ssh/sshd_config\.d/\*\.conf'
+    line: 'Include /etc/ssh/sshd_config.d/*.conf'
+    insertbefore: BOF
+    validate: 'sshd -t -f %s'
+  notify: Restart sshd
+
 - name: "5.1.5 | PATCH | Ensure sshd access is configured"
   when: ubtu26cis_rule_5_1_5
   tags:
@@ -132,7 +147,11 @@
     - name: "5.1.5 | PATCH | Ensure sshd access is configured | Add allowed users"
       when: "ubtu26cis_sshd_allow_users| default('') | length > 0 "
       ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
+        path: "{{ ubtu26cis_sshd_cis_conf }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
         regexp: '(?i)^(#?)\s*AllowUsers'
         line: 'AllowUsers {{ ubtu26cis_sshd_allow_users }}'
         validate: 'sshd -t -f %s'
@@ -141,7 +160,11 @@
     - name: "5.1.5 | PATCH | Ensure sshd access is configured | Add allowed groups"
       when: "ubtu26cis_sshd_allow_groups| default('') | length > 0"
       ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
+        path: "{{ ubtu26cis_sshd_cis_conf }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
         regexp: '(?i)^(#?)\s*AllowGroups'
         line: 'AllowGroups {{ ubtu26cis_sshd_allow_groups }}'
         validate: 'sshd -t -f %s'
@@ -150,7 +173,11 @@
     - name: "5.1.5 | PATCH | Ensure sshd access is configured | Add deny users"
       when: "ubtu26cis_sshd_deny_users| default('') | length > 0"
       ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
+        path: "{{ ubtu26cis_sshd_cis_conf }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
         regexp: '(?i)^(#?)\s*DenyUsers'
         line: 'DenyUsers {{ ubtu26cis_sshd_deny_users }}'
         validate: 'sshd -t -f %s'
@@ -159,7 +186,11 @@
     - name: "5.1.5 | PATCH | Ensure sshd access is configured | Add deny groups"
       when: "ubtu26cis_sshd_deny_groups| default('') | length > 0"
       ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
+        path: "{{ ubtu26cis_sshd_cis_conf }}"
+        create: true
+        owner: root
+        group: root
+        mode: 'u-x,go-rwx'
         regexp: '^DenyGroups|^#DenyGroups'
         line: 'DenyGroups {{ ubtu26cis_sshd_deny_groups }}'
         validate: 'sshd -t -f %s'
@@ -179,10 +210,13 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: ^Banner
     line: Banner /etc/issue.net
-    insertafter: '^# no default banner path'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -196,10 +230,13 @@
     - NIST800-53R5_SC-8
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: ^Ciphers
     line: "Ciphers {{ ubtu26cis_sshd_ciphers | join(',') }}"
-    insertafter: '^# Ciphers and keying'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -217,7 +254,11 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     validate: 'sshd -t -f %s'
@@ -238,7 +279,11 @@
     - NIST800-53R5_CM-7
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*DisableForwarding
     line: 'DisableForwarding yes'
     validate: 'sshd -t -f %s'
@@ -258,7 +303,11 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*GSSAPIAuthentication
     line: 'GSSAPIAuthentication no'
     validate: 'sshd -t -f %s'
@@ -278,7 +327,11 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*HostbasedAuthentication
     line: 'HostbasedAuthentication no'
     validate: 'sshd -t -f %s'
@@ -298,7 +351,11 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*IgnoreRhosts
     line: 'IgnoreRhosts yes'
     validate: 'sshd -t -f %s'
@@ -314,10 +371,13 @@
     - NIST800-53R5_SC-8
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*KexAlgorithms
     line: "KexAlgorithms {{ ubtu26cis_sshd_kex_algorithms | join(',') }}"
-    insertafter: '^# Ciphers and keying'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -362,10 +422,13 @@
     - NIST800-53R5_CM-6
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*LoginGraceTime
     line: 'LoginGraceTime {{ ubtu26cis_sshd_login_grace_time }}'
-    insertafter: '^# Authentication'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -381,10 +444,13 @@
     - NIST800-53R5_SI-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*LogLevel
     line: 'LogLevel {{ ubtu26cis_sshd_log_level }}'
-    insertafter: '^# Logging'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -402,10 +468,13 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*MACs
     line: "MACs {{ ubtu26cis_sshd_macs | join(',') }}"
-    insertafter: '^# Ciphers and keying'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -419,10 +488,13 @@
     - NIST800-53R5_AU-3
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*MaxAuthTries
     line: 'MaxAuthTries {{ ubtu26cis_sshd_max_auth_tries }}'
-    insertafter: '^# Authentication'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -440,10 +512,13 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*MaxSessions
     line: 'MaxSessions {{ ubtu26cis_sshd_max_sessions }}'
-    insertafter: '^# Authentication'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -461,11 +536,13 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*MaxStartups
     line: 'MaxStartups 10:30:60'
-    insertbefore: '^Match'
-    firstmatch: true
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -483,10 +560,13 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*PermitEmptyPasswords
     line: 'PermitEmptyPasswords no'
-    insertafter: '# To disable tunneled clear text passwords'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
 
@@ -500,7 +580,11 @@
     - NIST800-53R5_AC-6
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*PermitRootLogin
     line: 'PermitRootLogin no'
     validate: 'sshd -t -f %s'
@@ -520,7 +604,11 @@
     - NIST800-53R5_IA-5
     - sshd
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*PermitUserEnvironment
     line: 'PermitUserEnvironment no'
     validate: 'sshd -t -f %s'
@@ -541,9 +629,54 @@
     - sshd
     - pam
   ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
+    path: "{{ ubtu26cis_sshd_cis_conf }}"
+    create: true
+    owner: root
+    group: root
+    mode: 'u-x,go-rwx'
     regexp: (?i)^(#?)\s*UsePAM
     line: 'UsePAM yes'
-    insertafter: '^# and ChallengeResponseAuthentication'
     validate: 'sshd -t -f %s'
   notify: Restart sshd
+
+- name: "5.1.x | PATCH | Comment out CIS-managed sshd settings above the Include line so the drop-in applies"
+  tags:
+    - level1-server
+    - level1-workstation
+    - patch
+    - sshd
+  ansible.builtin.replace:
+    path: /etc/ssh/sshd_config
+    regexp: '(?i)^(\s*{{ item.key }}\s.*)$'
+    replace: '# \1'
+    before: 'Include\s+/etc/ssh/sshd_config\.d/'
+    validate: 'sshd -t -f %s'
+  loop: "{{ ubtu26cis_sshd_cis_keywords | dict2items | selectattr('value') | list }}"
+  loop_control:
+    label: "{{ item.key }}"
+  notify: Restart sshd
+  vars:
+    ubtu26cis_sshd_cis_keywords:
+      AllowUsers: "{{ ubtu26cis_rule_5_1_5 and ubtu26cis_sshd_allow_users | default('') | length > 0 }}"
+      AllowGroups: "{{ ubtu26cis_rule_5_1_5 and ubtu26cis_sshd_allow_groups | default('') | length > 0 }}"
+      DenyUsers: "{{ ubtu26cis_rule_5_1_5 and ubtu26cis_sshd_deny_users | default('') | length > 0 }}"
+      DenyGroups: "{{ ubtu26cis_rule_5_1_5 and ubtu26cis_sshd_deny_groups | default('') | length > 0 }}"
+      Banner: "{{ ubtu26cis_rule_5_1_6 }}"
+      Ciphers: "{{ ubtu26cis_rule_5_1_7 }}"
+      ClientAliveInterval: "{{ ubtu26cis_rule_5_1_8 }}"
+      ClientAliveCountMax: "{{ ubtu26cis_rule_5_1_8 }}"
+      DisableForwarding: "{{ ubtu26cis_rule_5_1_9 }}"
+      GSSAPIAuthentication: "{{ ubtu26cis_rule_5_1_10 }}"
+      HostbasedAuthentication: "{{ ubtu26cis_rule_5_1_11 }}"
+      IgnoreRhosts: "{{ ubtu26cis_rule_5_1_12 }}"
+      KexAlgorithms: "{{ ubtu26cis_rule_5_1_13 }}"
+      LoginGraceTime: "{{ ubtu26cis_rule_5_1_15 }}"
+      LogLevel: "{{ ubtu26cis_rule_5_1_16 }}"
+      MACs: "{{ ubtu26cis_rule_5_1_17 }}"
+      MaxAuthTries: "{{ ubtu26cis_rule_5_1_18 }}"
+      MaxSessions: "{{ ubtu26cis_rule_5_1_19 }}"
+      MaxStartups: "{{ ubtu26cis_rule_5_1_20 }}"
+      PermitEmptyPasswords: "{{ ubtu26cis_rule_5_1_21 }}"
+      PermitRootLogin: "{{ ubtu26cis_rule_5_1_22 }}"
+      PermitUserEnvironment: "{{ ubtu26cis_rule_5_1_23 }}"
+      UsePAM: "{{ ubtu26cis_rule_5_1_24 }}"

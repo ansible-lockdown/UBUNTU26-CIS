@@ -42,6 +42,20 @@
 - 5.4.3.1 removes nologin lines from /etc/shells
 - 6.1.1.1.4 checks the /etc/tmpfiles.d override, vendor file left alone
 - 6.1.1.1.5 journald rotation defaults set to the benchmark example values
+- 1.5.11 and 1.5.12 coredump settings written to a coredump.conf.d drop-in under [Coredump]
+- 1.2.1.6 and 1.2.1.9 set owner and mode per file and report changes
+- 2.1.22 exim4 changes run update-exim4.conf
+- 2.3.3.3 unmasks chrony before starting it
+- 2.4.2.1 runs only when at is installed, group daemon when present
+- 3.2.1 to 3.2.6 unload the module
+- 5.4.3.2 sets TMOUT with typeset -xr
+- 6.1.2.4 finds the rsyslog config in /etc/rsyslog.conf and rsyslog.d only
+- 7.1.11 sticky bit step skips when no directories are found
+- route flush handlers use sysctl -w and no longer write /etc/sysctl.conf
+- auditd user exclusions exclude the listed users, not everyone else
+- ubtu26_ptrace_value renamed ubtu26cis_ptrace_value
+- tasks that change files named PATCH in 1.1.1.11, 5.4.2.5, 5.4.3.2 and 7.2.10
+- bridge passes ubtu26cis_tmp_svc to the audit
 - 6.1.2.2 unmasks and starts rsyslog
 - 6.1.2.4 auth logging goes to /var/log/auth.log
 - 6.2.3.18 and 6.2.3.25 rules include fchmodat2 and renameat2
@@ -51,6 +65,7 @@
 - 6.2.3.8 watches /etc/network/interfaces, interfaces.d and /etc/netplan
 - 6.2.3.27 to 6.2.3.31 rules set arch=b64 and auid!=unset
 - 6.2.3.34 -c written to 01-initialize.rules
+- auditd rule files written 0640 so 6.2.4.5 does not change them on the next run
 - 6.2.3.8 and 6.2.3.9 directory rules written only when the directory exists
 - 6.3.2 cron service task no longer reports changed every run
 - 6.3.2 defaults to dailyaidecheck.timer, the benchmark method
@@ -84,6 +99,9 @@
 - bridge passes ubtu26cis_dconf_db_name through to the audit
 - bridge passes ubtu26cis_warning_banner through to the audit
 - 5.1.13 and 5.1.14 KexAlgorithms include mlkem768x25519-sha256 and sntrup761x25519-sha512
+- 5.1.5 to 5.1.24 sshd settings written to /etc/ssh/sshd_config.d/00-cis-sshd.conf so other drop-ins cannot override them
+- sshd_config keeps its Include line, CIS keywords placed above it are commented out
+- bridge passes ubtu26cis_sshd_cis_conf to the audit
 - 6.2.3.21 toggle moved into numeric order
 
 ## September 2026

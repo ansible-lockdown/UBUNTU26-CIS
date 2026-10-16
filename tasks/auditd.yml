@@ -60,7 +60,7 @@
     dest: /etc/audit/rules.d/99_auditd.rules
     owner: root
     group: root
-    mode: 'u-x,go-wx'
+    mode: 'u-x,g-wx,o-rwx'
   register: discovered_audit_rules_updated
   notify: Update auditd
 
@@ -74,7 +74,7 @@
     create: true
     owner: root
     group: root
-    mode: 'u-x,go-wx'
+    mode: 'u-x,g-wx,o-rwx'
   notify: Update auditd
 
 - name: POST | AUDITD | Set up auditd user logging exceptions

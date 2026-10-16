@@ -380,12 +380,12 @@
       vars:
         warn_control_id: '7.2.10'
 
-    - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured"
+    - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured"
       when:
         - discovered_homedir_hidden_files.stdout | length > 0
         - ubtu26cis_dotperm_ansiblemanaged
       block:
-        - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured | Changes files if configured .bash_history & .netrc"
+        - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured | Changes files if configured .bash_history & .netrc"
           when:
             - discovered_homedir_hidden_files.stdout | length > 0
             - item | basename in ['.bash_history','.netrc']
@@ -396,7 +396,7 @@
           register: discovered_dot_bash_history_to_change
           loop: "{{ discovered_homedir_hidden_files.stdout_lines }}"
 
-        - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured | Changes files if configured file mode"
+        - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured | Changes files if configured file mode"
           ansible.builtin.file:
             path: '{{ item }}'
             mode: 'u-x,go-wx'
@@ -404,7 +404,7 @@
           register: discovered_dot_bash_history_to_change_mode
           loop: "{{ discovered_homedir_hidden_files.stdout_lines }}"
 
-        - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured | Changes files ownerships"
+        - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured | Changes files ownerships"
           ansible.builtin.file:
             path: "{{ item }}"
             owner: "{{ prelim_captured_passwd_data | selectattr('dir', 'in', discovered_interactive_users_home.stdout_lines) | selectattr('dir', 'in', item) | map(attribute='uid') | last }}"
@@ -421,7 +421,7 @@
             group: "{{ prelim_captured_passwd_data | selectattr('dir', 'in', discovered_interactive_users_home.stdout_lines) | selectattr('dir', 'in', item) | map(attribute='gid') | last }}"
           with_items: "{{ discovered_homedir_hidden_files.stdout_lines }}"
 
-        - name: "7.2.10 | AUDIT | Ensure local interactive user dot files access is configured | rename .forward or .rhosts files"
+        - name: "7.2.10 | PATCH | Ensure local interactive user dot files access is configured | rename .forward or .rhosts files"
           when:
             - item | basename in ['.forward','.rhosts']
             - item is not search ("CIS")

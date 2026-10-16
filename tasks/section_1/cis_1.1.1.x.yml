@@ -396,7 +396,7 @@
       vars:
         warn_control_id: '1.1.1.11'
 
-    - name: "1.1.1.11 | AUDIT | Ensure unused filesystems kernel modules are not available | Remove discovery script"
+    - name: "1.1.1.11 | PATCH | Ensure unused filesystems kernel modules are not available | Remove discovery script"
       when: ubtu26cis_remove_kernel_discovery_script
       ansible.builtin.file:
         path: "{{ ubtu26cis_temp_exec_location }}/fs_with_cves.sh"

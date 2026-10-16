@@ -138,14 +138,23 @@
     - rule_1.2.1.6
     - NIST800-53R5_AC-6
     - permissions
-  ansible.builtin.shell: |
-    set -o pipefail
-    chown root:root /etc/apt/auth.conf.d/*.conf 2>/dev/null
-    chmod u-x,g-wx,o-rwx /etc/apt/auth.conf.d/*.conf 2>/dev/null
-    true
-  args:
-    executable: "{{ ubtu26cis_shell_executable }}"
-  changed_when: false
+  block:
+    - name: "1.2.1.6 | AUDIT | Ensure access to files in the /etc/apt/auth.conf.d/ directory is configured | Find files"
+      ansible.builtin.find:
+        paths: /etc/apt/auth.conf.d
+        patterns: '*.conf'
+        file_type: file
+      register: discovered_apt_1_2_1_6_files
+
+    - name: "1.2.1.6 | PATCH | Ensure access to files in the /etc/apt/auth.conf.d/ directory is configured | Set owner and mode"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,g-wx,o-rwx'
+      loop: "{{ discovered_apt_1_2_1_6_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
 
 - name: "1.2.1.7 | PATCH | Ensure access to /usr/share/keyrings directory is configured"
   when: ubtu26cis_rule_1_2_1_7
@@ -188,14 +197,23 @@
     - rule_1.2.1.9
     - NIST800-53R5_AC-6
     - permissions
-  ansible.builtin.shell: |
-    set -o pipefail
-    chown root:root /etc/apt/sources.list.d/* 2>/dev/null
-    chmod u-x,go-wx /etc/apt/sources.list.d/* 2>/dev/null
-    true
-  args:
-    executable: "{{ ubtu26cis_shell_executable }}"
-  changed_when: false
+  block:
+    - name: "1.2.1.9 | AUDIT | Ensure access to files in /etc/apt/sources.list.d are configured | Find files"
+      ansible.builtin.find:
+        paths: /etc/apt/sources.list.d
+        patterns: '*'
+        file_type: file
+      register: discovered_apt_1_2_1_9_files
+
+    - name: "1.2.1.9 | PATCH | Ensure access to files in /etc/apt/sources.list.d are configured | Set owner and mode"
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 'u-x,go-wx'
+      loop: "{{ discovered_apt_1_2_1_9_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
 
 - name: "1.2.1.10 | PATCH | Ensure repositories are set to https in /etc/apt/sources.list"
   when: ubtu26cis_rule_1_2_1_10
