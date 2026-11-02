@@ -103,6 +103,7 @@
 - sshd_config keeps its Include line, CIS keywords placed above it are commented out
 - bridge passes ubtu26cis_sshd_cis_conf to the audit
 - 6.2.3.21 toggle moved into numeric order
+- remove schedules from workflows
 
 ## September 2026
 

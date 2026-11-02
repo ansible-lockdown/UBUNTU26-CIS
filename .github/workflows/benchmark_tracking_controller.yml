@@ -1,17 +1,11 @@
 ---
 
-# GitHub schedules all cron jobs in UTC.
-# This expression will run the job every day at 9 AM Eastern Time during Daylight Saving Time (mid-March to early November).
-# This expression will run the job every day at 8 AM Eastern Time during Standard Time (early November to mid-March).
-
 name: Central Benchmark Orchestrator
 
 on:
   push:
     branches:
       - latest
-  schedule:
-    - cron: '0 6 * * *'  # Runs daily at 9 AM ET
   workflow_dispatch:
 
 jobs:
