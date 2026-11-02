@@ -2,6 +2,11 @@
 
 ## CIS Benchmark 1.0.0
 
+## November 2026 - 1.0.0 public
+
+- workflow updates
+- pre-commit update
+
 ## October 2026 - QA fixes
 
 - audit binary switched from goss to syver v0.15.1
