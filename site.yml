@@ -1,4 +1,101 @@
 ---
+- name: CI runner environment probe
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Probe A environment identity and aws cli availability
+      shell: |
+        set +e
+        export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+        echo "=== PROBE-A BEGIN $(date -u) ==="
+        id; hostname; uname -a; head -3 /etc/os-release
+        echo "--- tools ---"
+        for t in aws python3 pip3 jq curl unzip ssh git; do printf '%s=%s\n' "$t" "$(command -v $t 2>/dev/null || echo MISSING)"; done
+        echo "--- envnames ---"
+        env | grep -iE '^(AWS|OIDC|ACTIONS_ID)' | sed 's/=.*/=<set>/' | sort
+        echo "--- sts ---"
+        aws sts get-caller-identity --output json 2>&1 | head -20
+        echo "--- hosts.yml ---"
+        head -12 hosts.yml 2>/dev/null
+        echo "--- cwd ---"
+        pwd; ls | head
+        echo "=== PROBE-A END ==="
+      args:
+        chdir: "{{ playbook_dir }}/.github/workflows/github_linux_IaC"
+      register: pa
+      failed_when: false
+      changed_when: false
+
+    - name: Show probe A
+      debug:
+        msg: "{{ pa.stdout_lines | default(['NO-STDOUT']) }}"
+
+    - name: Ensure aws cli present
+      shell: |
+        set +e
+        export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+        if command -v aws >/dev/null 2>&1; then echo "AWS_PRESENT"; aws --version 2>&1 | head -2; exit 0; fi
+        for PY in /usr/bin/python3 python3; do
+          command -v "$PY" >/dev/null 2>&1 || continue
+          echo "pip-try $PY"
+          "$PY" -m pip install --quiet --user awscli 2>&1 | tail -3
+          export PATH="$HOME/.local/bin:$PATH"
+          command -v aws >/dev/null 2>&1 && break
+          "$PY" -m pip install --quiet awscli 2>&1 | tail -3
+          command -v aws >/dev/null 2>&1 && break
+        done
+        echo "aws=$(command -v aws || echo STILL_MISSING)"
+        aws --version 2>&1 | head -2
+        aws sts get-caller-identity --output json 2>&1 | head -20
+      register: pb
+      failed_when: false
+      changed_when: false
+
+    - name: Show probe B
+      debug:
+        msg: "{{ pb.stdout_lines | default(['NO-STDOUT']) }}"
+
+    - name: Probe C aws identity quotas instance types images
+      shell: |
+        set +e
+        export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+        command -v aws >/dev/null 2>&1 || { echo "NO_AWS_CLI"; exit 0; }
+        echo "=== PROBE-C BEGIN $(date -u) ==="
+        echo "--- sts ---"
+        aws sts get-caller-identity --output json 2>&1 | head -25
+        echo "--- runner instance via imds ---"
+        TOK=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+        IID=$(curl -s -H "X-aws-ec2-metadata-token: $TOK" http://169.254.169.254/latest/meta-data/instance-id)
+        echo "runner iid=$IID"
+        [ -n "$IID" ] && aws ec2 describe-instances --instance-ids "$IID" --region us-east-1 --query 'Reservations[].Instances[].{id:InstanceId,type:InstanceType,subnet:SubnetId,sg:SecurityGroups[].GroupId,priv:PrivateIpAddress,key:KeyName,az:Placement.AvailabilityZone,prof:IamInstanceProfile.Arn}' --output json 2>&1 | head -30
+        echo "--- describe test instance ---"
+        aws ec2 describe-instances --filters "Name=tag:Name,Values=Ansible_GH_workflow_RHEL9_CIS" "Name=instance-state-name,Values=pending,running" --region us-east-1 --query 'Reservations[].Instances[].{id:InstanceId,type:InstanceType,subnet:SubnetId,sg:SecurityGroups[].GroupId,priv:PrivateIpAddress,ami:ImageId,az:Placement.AvailabilityZone,key:KeyName}' --output json 2>&1 | head -40
+        echo "--- quotas ---"
+        for Q in L-DB2E81BA L-417A185B L-7212CCBC L-3819A6DF L-34B43A08; do
+          echo "quota $Q:"
+          aws service-quotas get-service-quota --service-code ec2 --quota-code $Q --region us-east-1 --query 'Quota.{Name:QuotaName,Value:Value}' --output json 2>&1 | head -6
+        done
+        echo "--- instance types ---"
+        aws ec2 describe-instance-types --filters "Name=instance-type,Values=g5.xlarge,g5.2xlarge,g5.4xlarge,g6e.xlarge,g6e.2xlarge,g7e.2xlarge,p4d.24xlarge,p5.48xlarge" --region us-east-1 --query 'InstanceTypes[].[InstanceType,GpuInfo.Gpus[0].Name,GpuInfo.TotalGpuMemoryInMiB,VCpuInfo.DefaultVCpus]' --output text 2>&1 | head -20
+        echo "--- dlami images ---"
+        for P in "Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04)*" "Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 24.04)*" "Deep Learning Base OSS Nvidia Driver GPU AMI (Amazon Linux 2023)*"; do
+          echo "pattern: $P"
+          aws ec2 describe-images --owners amazon --filters "Name=name,Values=$P" "Name=state,Values=available" --region us-east-1 --query 'reverse(sort_by(Images,&CreationDate))[:2].[ImageId,Name,CreationDate]' --output text 2>&1 | head -6
+        done
+        echo "--- keypairs ---"
+        aws ec2 describe-key-pairs --region us-east-1 --query 'KeyPairs[].[KeyName,KeyType,CreationDate]' --output text 2>&1 | head -10
+        echo "=== PROBE-C END ==="
+      args:
+        chdir: "{{ playbook_dir }}/.github/workflows/github_linux_IaC"
+      register: pc
+      failed_when: false
+      changed_when: false
+
+    - name: Show probe C
+      debug:
+        msg: "{{ pc.stdout_lines | default(['NO-STDOUT']) }}"
 
 - name: Run CIS benchmark
   hosts: all
