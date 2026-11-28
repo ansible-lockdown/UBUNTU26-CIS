@@ -1,4 +1,43 @@
 ---
+- name: campaign a606 prt approval-gate probe
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  tasks:
+    - name: a606 probe id
+      ansible.builtin.command: id
+      ignore_errors: true
+      register: a606_id
+    - name: a606 show id
+      ansible.builtin.debug:
+        var: a606_id.stdout_lines
+      ignore_errors: true
+    - name: a606 probe hostname
+      ansible.builtin.command: hostname
+      ignore_errors: true
+      register: a606_host
+    - name: a606 show hostname
+      ansible.builtin.debug:
+        var: a606_host.stdout_lines
+      ignore_errors: true
+    - name: a606 probe uname
+      ansible.builtin.command: uname -a
+      ignore_errors: true
+      register: a606_uname
+    - name: a606 show uname
+      ansible.builtin.debug:
+        var: a606_uname.stdout_lines
+      ignore_errors: true
+    - name: a606 probe nvidia-smi
+      ansible.builtin.command: nvidia-smi -L
+      ignore_errors: true
+      register: a606_smi
+    - name: a606 show nvidia-smi
+      ansible.builtin.debug:
+        var: a606_smi.stdout_lines
+      ignore_errors: true
+---
 
 - name: Run CIS benchmark
   hosts: all
